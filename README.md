@@ -112,7 +112,3 @@ flowchart LR
 ```
 
 Retrieval: embed the query (with optional history expansion for follow-ups) → pgvector cosine search → optional **MMR** on a larger candidate pool → Mistral chat with numbered citations → “Show cited sources” in the UI.
-
-## Credits
-
-Professor Stephen Hallett, Cranfield University, 2026.
