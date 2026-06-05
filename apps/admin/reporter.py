@@ -593,8 +593,9 @@ class _PdfWriter:
         for fl in filter_lines:
             self.text_lines([fl], size=_SUBTITLE_SIZE)
 
-        db_mask = re.sub(r"//[^/@\s]+@", "//***@", cfg.MONGODB_URI)
-        self.text_lines([f"Database URI (sanitised): {db_mask}"], size=_META_SIZE)
+        db_url = (cfg.DATABASE_URL or "").strip() or "(not set)"
+        db_mask = re.sub(r"//[^/@\s]+@", "//***@", db_url)
+        self.text_lines([f"Database URL (sanitised): {db_mask}"], size=_META_SIZE)
         self._y += 2
         self.text_lines([_summary_paragraph(stats, rows)], size=_BODY_SIZE)
         self._y += 4
