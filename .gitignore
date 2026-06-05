@@ -1,0 +1,72 @@
+# Git ignore — SOILL Public RAG Chatbot
+#
+# Vectors and conversation history live in Postgres (not on disk). This file
+# covers local Python envs, secrets, ingest manifests, generated reports, and
+# optional user corpus content.
+
+# Author: Professor Stephen Hallett, 5 June, 2026
+
+# -----------------------------------------------------------------------------
+# Python
+# -----------------------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# uv local cache (uv.lock at repo root should remain tracked)
+.uv/
+
+# -----------------------------------------------------------------------------
+# Environment and secrets
+# -----------------------------------------------------------------------------
+.env
+.ENV
+*.local
+
+# -----------------------------------------------------------------------------
+# Local runtime data (ingest manifest only — keep empty folder in repo)
+# -----------------------------------------------------------------------------
+data/*
+!data/.gitkeep
+
+# -----------------------------------------------------------------------------
+# Report output (soill-report PDFs)
+# -----------------------------------------------------------------------------
+Reports/*
+!Reports/.gitkeep
+
+# -----------------------------------------------------------------------------
+# Logs
+# -----------------------------------------------------------------------------
+*.log
+
+# -----------------------------------------------------------------------------
+# IDEs and OS
+# -----------------------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# -----------------------------------------------------------------------------
+# Chainlit (apps/chatbot): ignore generated files; keep versioned UI config
+# -----------------------------------------------------------------------------
+apps/chatbot/.chainlit/*
+!apps/chatbot/.chainlit/config.toml
+
+# -----------------------------------------------------------------------------
+# Corpus input (PDF, DOCX, TXT) — user content
+# Remove the next two lines if you want SourceDocuments tracked in git.
+# -----------------------------------------------------------------------------
+SourceDocuments/*
+!SourceDocuments/.gitkeep

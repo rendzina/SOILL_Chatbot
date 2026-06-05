@@ -1,0 +1,32 @@
+# Render blueprint — SOILL Public RAG Chatbot
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: soill-chatbot
+    runtime: docker
+    dockerfilePath: ./apps/chatbot/Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /
+    envVars:
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: soill-postgres
+          property: connectionString
+      - key: LOG_CONVERSATIONS
+        value: "true"
+      - key: LOG_CLIENT_METADATA
+        value: "false"
+      - key: CHAT_HISTORY_ENABLED
+        value: "true"
+
+databases:
+  - name: soill-postgres
+    plan: starter
+    databaseName: soill
+    user: soill
+    postgresMajorVersion: "16"
+    ipAllowList: []
