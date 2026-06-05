@@ -4,6 +4,7 @@ SOILL Public RAG Chatbot — Chainlit web UI.
 Run from repo root: uv run --directory apps/chatbot chainlit run app.py
 
 **Created:** 04-06-2026 (UK style).
+**Credits:** Professor Stephen Hallett, Cranfield University, 2026.
 """
 
 from __future__ import annotations
@@ -38,6 +39,10 @@ _ASSISTANT_NAME = "SOILL"
 
 
 def _sources_cited_in_answer(answer: str, sources: list[SourceRef]) -> list[SourceRef]:
+    """
+    Keep only context labels that appear as numeric citations in the answer
+    (e.g. [1], [2, 3]). Matches how the model is instructed to cite in SYSTEM_RAG.
+    """
     if not sources:
         return []
     max_label = max(s.label for s in sources)
@@ -80,10 +85,20 @@ async def on_chat_start() -> None:
         prior = fetch_recent_turns(client_meta.thread_id)
         _set_session_history(trim_history(prior))
 
+    # First assistant message in the thread (edit the text below as needed).
+    await cl.Message(
+        author=_ASSISTANT_NAME,
+        content=(
+            "I am the **SOILL** chatbot. I can help you find the information you need relating to the EU Mission Soil Living Labs and Lighthouses, from start to scale. "
+            "Please ask me a question and I will do my best to help you and point you in the right direction to the information you need."
+        ),
+    ).send()
+
     if not cfg.MISTRAL_API_KEY:
         await cl.Message(
+            author=_ASSISTANT_NAME,
             content=(
-                "Set `MISTRAL_API_KEY` in your `.env` at the repository root, then restart."
+                "Set `MISTRAL_API_KEY` in your `.env` at the project root, then restart."
             ),
         ).send()
 
