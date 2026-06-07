@@ -4,12 +4,11 @@ SOILL Public RAG Chatbot — Chainlit web UI.
 Run from repo root: uv run --directory apps/chatbot chainlit run app.py
 
 **Created:** 04-06-2026 (UK style).
-**Credits:** Professor Stephen Hallett, Cranfield University, 2026.
+**Author:** Professor Stephen Hallett, Cranfield University, 2026.
 """
 
 from __future__ import annotations
 
-import os
 import re
 import uuid
 
@@ -29,33 +28,15 @@ def _soill_data_layer():
 
 from soill import config as cfg
 from soill.chat_history import ChatTurn, append_turn, trim_history
-from soill.conversation_log import fetch_recent_turns, log_interaction
-from soill.rag import SourceRef, answer_question
+from soill.conversation_log import fetch_recent_turns
+from soill.services import ChatService, ChatSource
 from soill.user_identity import metadata_from_chainlit, metadata_to_dict
 
 _SESSION_SOURCES_PREFIX = "rag_sources_"
 _SESSION_HISTORY_KEY = "chat_history"
 _ASSISTANT_NAME = "SOILL"
 
-
-def _sources_cited_in_answer(answer: str, sources: list[SourceRef]) -> list[SourceRef]:
-    """
-    Keep only context labels that appear as numeric citations in the answer
-    (e.g. [1], [2, 3]). Matches how the model is instructed to cite in SYSTEM_RAG.
-    """
-    if not sources:
-        return []
-    max_label = max(s.label for s in sources)
-    cited: set[int] = set()
-    for m in re.finditer(r"\[([^\]]+)\]", answer or ""):
-        for part in m.group(1).split(","):
-            p = part.strip()
-            if p.isdigit():
-                n = int(p)
-                if 1 <= n <= max_label:
-                    cited.add(n)
-    by_label = {s.label: s for s in sources}
-    return [by_label[i] for i in sorted(cited) if i in by_label]
+chat_service = ChatService()
 
 
 def _get_session_history() -> list[ChatTurn]:
@@ -122,15 +103,14 @@ async def on_show_sources(action: cl.Action) -> None:
     await cl.Message(author=_ASSISTANT_NAME, content=text).send()
 
 
-def _sources_block(cited_only: list[SourceRef]) -> str:
+def _sources_block(cited_only: list[ChatSource]) -> str:
     if not cited_only:
         return ""
     lines: list[str] = ["**Sources (cited)**\n"]
     for s in cited_only:
-        name = os.path.basename(s.source_path) if s.source_path else "unknown"
         preview = re.sub(r"\s+", " ", s.preview)
         label = f"{s.location_type}s {s.location_start}–{s.location_end}"
-        lines.append(f"- **[{s.label}]** `{name}` — {label}: {preview}\n")
+        lines.append(f"- **[{s.label}]** `{s.filename}` — {label}: {preview}\n")
     return "".join(lines)
 
 
@@ -144,27 +124,21 @@ async def on_message(message: cl.Message) -> None:
     cl.user_session.set("client_metadata", metadata_to_dict(client_meta))
     history = _get_session_history() if cfg.CHAT_HISTORY_ENABLED else []
 
-    try:
-        result = answer_question(text, top_k=cfg.RAG_TOP_K, history=history)
-    except (FileNotFoundError, RuntimeError) as e:
-        log_interaction(question=text, answer=None, error=str(e), client=client_meta)
-        await cl.Message(author=_ASSISTANT_NAME, content=str(e)).send()
-        return
-    except Exception as e:
-        log_interaction(question=text, answer=None, error=str(e), client=client_meta)
+    response = chat_service.chat(text, history=history, client=client_meta)
+
+    if response.error:
         await cl.Message(
             author=_ASSISTANT_NAME,
-            content=f"An unexpected error occurred: {e}",
+            content=response.answer,
         ).send()
         return
 
-    cited_sources = _sources_cited_in_answer(result.answer, result.sources)
-    sources = _sources_block(cited_sources)
+    sources = _sources_block(response.sources)
     actions: list[cl.Action] = []
     if sources:
         sid = str(uuid.uuid4())
         cl.user_session.set(f"{_SESSION_SOURCES_PREFIX}{sid}", sources)
-        n = len(cited_sources)
+        n = len(response.sources)
         actions.append(
             cl.Action(
                 name="show_sources",
@@ -176,17 +150,10 @@ async def on_message(message: cl.Message) -> None:
 
     await cl.Message(
         author=_ASSISTANT_NAME,
-        content=result.answer,
+        content=response.answer,
         actions=actions,
     ).send()
 
-    if cfg.CHAT_HISTORY_ENABLED and result.answer:
-        updated = append_turn(history, text, result.answer)
+    if cfg.CHAT_HISTORY_ENABLED and response.answer:
+        updated = append_turn(history, text, response.answer)
         _set_session_history(updated)
-
-    log_interaction(
-        question=text,
-        answer=result.answer,
-        cited_sources_count=len(cited_sources),
-        client=client_meta,
-    )

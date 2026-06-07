@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOILL Project — Mock site (dedicated chat page)</title>
+  <link rel="stylesheet" href="mock-site.css">
+</head>
+<body class="mock-site">
+  <nav class="mock-nav">
+    <span class="brand">SOILL Project (mock)</span>
+    <a href="mock-site-page.html">Mock project site — dedicated chat page</a>
+    <a href="index.html">Full-page chat client</a>
+    <a href="demos.html">Index of integration options</a>
+  </nav>
+
+  <main class="mock-main">
+    <h1>EU Mission Soil Living Labs</h1>
+    <p>
+      This page simulates a separate project website. The chatbot is integrated
+      as a <strong>dedicated page</strong> rather than a floating widget.
+    </p>
+
+    <div class="mock-card">
+      <h2>Option A — Link to chat page</h2>
+      <p>
+        Add a navigation item or button that opens the chat UI in the same tab
+        or a new tab.
+      </p>
+      <p>
+        <a class="mock-button" href="index.html">Ask SOILL</a>
+        <a class="mock-button secondary" href="index.html" target="_blank" rel="noopener">
+          Open in new tab
+        </a>
+      </p>
+      <p class="mock-note">
+        In production, the link would point to your deployed API host, e.g.
+        <code>https://chat-api.example.org/web/</code>.
+      </p>
+    </div>
+
+    <div class="mock-card" id="embedded">
+      <h2>Option B — Embed chat in a page section</h2>
+      <p>
+        Embed the chat UI in an iframe on a route such as
+        <code>/ask-soill</code> on your project site.
+      </p>
+      <iframe
+        class="embed-frame"
+        src="index.html"
+        title="SOILL chatbot"
+      ></iframe>
+      <p class="mock-note">
+        Example embed code for your CMS or static site:
+      </p>
+      <pre style="overflow-x:auto;background:#f4f6f8;padding:1rem;border-radius:0.5rem;font-size:0.85rem;"><code>&lt;iframe
+  src="https://your-api-host/web/"
+  title="SOILL chatbot"
+  style="width:100%;height:70vh;border:none;border-radius:12px;"&gt;
+&lt;/iframe&gt;</code></pre>
+    </div>
+  </main>
+</body>
+</html>

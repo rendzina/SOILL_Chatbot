@@ -1,0 +1,20 @@
+[project]
+name = "soill-api"
+version = "0.1.0"
+description = "SOILL public RAG chatbot HTTP API"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "soill",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+]
+
+[tool.uv.sources]
+soill = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["main.py", "routes"]

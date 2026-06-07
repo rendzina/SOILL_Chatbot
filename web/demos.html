@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOILL — Web integration demos</title>
+  <link rel="stylesheet" href="mock-site.css">
+  <style>
+    .demo-steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0;
+    }
+
+    .demo-steps > li {
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.25rem;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+    }
+
+    .demo-steps > li > h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.1rem;
+    }
+
+    .demo-steps > li > h2::before {
+      counter-increment: step;
+      content: counter(step) ". ";
+    }
+
+    .demo-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    .demo-table th,
+    .demo-table td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+    }
+
+    .demo-table th {
+      font-weight: 600;
+      background: #f9fafb;
+    }
+
+    .demo-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    pre {
+      overflow-x: auto;
+      background: #f4f6f8;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      margin: 0.75rem 0 0;
+    }
+
+    code {
+      font-size: 0.9em;
+    }
+
+    .mock-note {
+      margin-top: 0.75rem;
+    }
+  </style>
+</head>
+<body class="mock-site">
+  <nav class="mock-nav">
+    <span class="brand">SOILL integration demos</span>
+    <a href="demos.html">Demos</a>
+    <a href="index.html">Full-page chat client</a>
+  </nav>
+
+  <main class="mock-main">
+    <h1>Testing the FastAPI API</h1>
+    <p>
+      The HTTP API shares the same <code>ChatService</code> as the Chainlit app.
+      Work through the steps below in order. See
+      <code>documents/deployment.md</code> for production deployment and embedding
+      on a separate project website.
+    </p>
+
+    <ol class="demo-steps">
+      <li>
+        <h2>Start the API server</h2>
+        <p>
+          <strong>uvicorn</strong> is the web server that runs the FastAPI
+          application and listens for HTTP requests. The command below starts it
+          on your machine for local testing; <code>--reload</code> automatically
+          restarts the server when you change code (development only — do not use
+          that flag in production).
+        </p>
+        <p>
+          In a production environment you would still use uvicorn (or a process
+          manager in front of it), but without <code>--reload</code>, binding to
+          all interfaces (<code>--host 0.0.0.0</code>) and the port provided by
+          your host (e.g. Render’s <code>$PORT</code>). See
+          <code>documents/deployment.md</code> for the production command.
+        </p>
+        <pre><code>uv run --directory apps/api uvicorn main:app --reload --port 8080</code></pre>
+        <p class="mock-note">Stop with <strong>Ctrl+C</strong> in that terminal.</p>
+      </li>
+
+      <li>
+        <h2>Interactive API docs (Swagger)</h2>
+        <p>
+          <strong>Swagger UI</strong> is an interactive reference for the API, built
+          automatically by FastAPI. Use it when you want to explore available
+          endpoints, see request and response formats, and send test messages from
+          your browser without writing code or using the terminal — handy for a
+          quick sanity check that the API is working before trying the HTML demos.
+        </p>
+        <p>With the server running, open:</p>
+        <ul>
+          <li><a href="/docs"><strong>Swagger UI</strong></a> — try <code>POST /api/chat</code> from the browser</li>
+          <li><a href="/redoc"><strong>ReDoc</strong></a></li>
+          <li><a href="/health"><strong>Health check</strong></a></li>
+        </ul>
+        <p class="mock-note">
+          On the Swagger page, expand <strong>POST /api/chat</strong>, click
+          <strong>Try it out</strong>, and send a body such as:
+        </p>
+        <pre><code>{
+  "message": "What is a living lab?"
+}</code></pre>
+        <p class="mock-note">
+          Optional: pass <code>"session_id"</code> to continue a multi-turn
+          conversation (history is loaded from the database when
+          <code>CHAT_HISTORY_ENABLED=true</code>).
+        </p>
+      </li>
+
+      <li>
+        <h2>curl</h2>
+        <p>
+          <strong>curl</strong> sends an HTTP request from your terminal — useful
+          when you want to test the API without a browser, script the same call in
+          CI, or share an exact request with a colleague. Run the command below from
+          any terminal (the API must already be running on port 8080). The response
+          is printed as JSON in the terminal.
+        </p>
+        <pre><code>curl -X POST http://localhost:8080/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message": "What is soil health?"}'</code></pre>
+      </li>
+
+      <li>
+        <h2>HTML test client and integration demos</h2>
+        <p>With the API running:</p>
+        <table class="demo-table">
+          <thead>
+            <tr>
+              <th>URL</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="demos.html">http://localhost:8080/web/demos.html</a></td>
+              <td>Index of integration options (this page)</td>
+            </tr>
+            <tr>
+              <td><a href="index.html">http://localhost:8080/web/</a></td>
+              <td>Full-page chat client</td>
+            </tr>
+            <tr>
+              <td><a href="mock-site-page.html">http://localhost:8080/web/mock-site-page.html</a></td>
+              <td>Mock project site — dedicated chat page</td>
+            </tr>
+            <tr>
+              <td><a href="mock-site-popup.html">http://localhost:8080/web/mock-site-popup.html</a></td>
+              <td>Mock project site — floating popup widget</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="mock-note">
+          Try the full-page chat client first, then the two mock project sites to
+          see how the chatbot could appear on a separate website.
+        </p>
+      </li>
+    </ol>
+  </main>
+</body>
+</html>

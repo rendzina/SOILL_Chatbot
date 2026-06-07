@@ -61,6 +61,7 @@ Reports/*
 # -----------------------------------------------------------------------------
 # Chainlit (apps/chatbot): ignore generated files; keep versioned UI config
 # -----------------------------------------------------------------------------
+.chainlit/
 apps/chatbot/.chainlit/*
 !apps/chatbot/.chainlit/config.toml
 

@@ -1,6 +1,6 @@
 # SOILL Public RAG Chatbot
 
-Monorepo for the SOILL / EU Mission Soil Living Labs public RAG assistant: **Chainlit** UI, **Mistral** embeddings and chat, **PostgreSQL + pgvector** (no MongoDB or FAISS).
+Monorepo for the SOILL / EU Mission Soil Living Labs public RAG assistant: **Chainlit** UI, **FastAPI** HTTP API, **Mistral** embeddings and chat, **PostgreSQL + pgvector** (no MongoDB or FAISS).
 
 *Author:* Professor Stephen Hallett, 5 June, 2026
 
@@ -8,8 +8,11 @@ Monorepo for the SOILL / EU Mission Soil Living Labs public RAG assistant: **Cha
 
 | Path | Purpose |
 |------|---------|
-| [`packages/soill/`](packages/soill/) | Shared library (chunking, embeddings, RAG, Postgres store, logging) |
+| [`packages/soill/`](packages/soill/) | Shared library (chunking, embeddings, RAG, `ChatService`, Postgres store, logging) |
 | [`apps/chatbot/`](apps/chatbot/) | Chainlit web app (deployed on Render) |
+| [`apps/api/`](apps/api/) | FastAPI HTTP API (`POST /api/chat`) |
+| [`web/`](web/) | HTML/JS test client and website integration demos |
+| [`documents/`](documents/) | Deployment, architectural approach, and integration guides |
 | [`apps/admin/`](apps/admin/) | Local CLIs: ingest, schema init, PDF reports |
 | [`SourceDocuments/`](SourceDocuments/) | Corpus for local ingestion (`.pdf`, `.docx`, `.txt`) |
 | [`sql/001_init.sql`](sql/001_init.sql) | Database schema and indexes |
@@ -59,6 +62,59 @@ uv run --directory apps/chatbot chainlit run app.py
 
 Open the URL shown in the terminal (default `http://localhost:8000`). Welcome images and logos are loaded from `apps/chatbot/public/` via `/public/...` paths in `chainlit.md`.
 
+## Testing the FastAPI API
+
+The HTTP API shares the same `ChatService` as the Chainlit app. It is intended for local development and future frontends (e.g. a JavaScript chat widget); Render deployment still runs Chainlit only (see below).
+
+Start the API server:
+
+```bash
+uv run --directory apps/api uvicorn main:app --reload --port 8080
+```
+
+Stop it with **Ctrl+C** in that terminal.
+
+### Interactive API docs (Swagger)
+
+FastAPI provides built-in documentation. With the server running, open:
+
+- **Swagger UI:** [http://localhost:8080/docs](http://localhost:8080/docs) — try `POST /api/chat` from the browser
+- **ReDoc:** [http://localhost:8080/redoc](http://localhost:8080/redoc)
+- **Health check:** [http://localhost:8080/health](http://localhost:8080/health)
+
+On the Swagger page, expand **POST /api/chat**, click **Try it out**, and send a body such as:
+
+```json
+{
+  "message": "What is a living lab?"
+}
+```
+
+Optional: pass `"session_id"` to continue a multi-turn conversation (history is loaded from the database when `CHAT_HISTORY_ENABLED=true`).
+
+### curl
+
+```bash
+curl -X POST http://localhost:8080/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message": "What is soil health?"}'
+```
+
+### HTML test client and integration demos
+
+With the API running:
+
+| URL | Description |
+|-----|-------------|
+| [http://localhost:8080/web/demos.html](http://localhost:8080/web/demos.html) | Index of integration options |
+| [http://localhost:8080/web/](http://localhost:8080/web/) | Full-page chat client |
+| [http://localhost:8080/web/mock-site-page.html](http://localhost:8080/web/mock-site-page.html) | Mock project site — dedicated chat page |
+| [http://localhost:8080/web/mock-site-popup.html](http://localhost:8080/web/mock-site-popup.html) | Mock project site — floating popup widget |
+
+Try the full-page chat client first, then the two mock project sites to see how the chatbot could appear on a separate website.
+
+See [`documents/deployment.md`](documents/deployment.md) for production deployment, CORS, and embedding on a separate project website. See [`documents/approach.md`](documents/approach.md) for the architectural rationale.
+
 ## Admin commands
 
 | Command | Description |
@@ -84,6 +140,8 @@ Ingestion uses a local `data/manifest.json` (SHA-256 per file). Vectors live onl
 
 Internal `DATABASE_URL` is for the web service; external URL is for local admin tools.
 
+The blueprint currently deploys **Chainlit only**. To deploy the FastAPI API and web embed demos for a project website, see [`documents/deployment.md`](documents/deployment.md).
+
 ## Environment variables
 
 See [`.env.example`](.env.example). Key settings:
@@ -105,10 +163,13 @@ When `LOG_CONVERSATIONS=true`, each question and answer is stored in `soill_conv
 flowchart LR
   SD[SourceDocuments] --> PF[soill-process]
   PF --> PG[(Postgres pgvector)]
-  CL[Chainlit app] --> PG
-  CL --> Mistral[Mistral API]
+  CL[Chainlit app] --> CS[ChatService]
+  API[FastAPI /api/chat] --> CS
+  CS --> PG
+  CS --> Mistral[Mistral API]
   PF --> Mistral
   RP[soill-report] --> PG
+  WEB[web test client] --> API
 ```
 
-Retrieval: embed the query (with optional history expansion for follow-ups) → pgvector cosine search → optional **MMR** on a larger candidate pool → Mistral chat with numbered citations → “Show cited sources” in the UI.
+Both Chainlit and the FastAPI endpoint call the same `ChatService` in `packages/soill`. Retrieval: embed the query (with optional history expansion for follow-ups) → pgvector cosine search → optional **MMR** on a larger candidate pool → Mistral chat with numbered citations → cited sources in the UI or API response.

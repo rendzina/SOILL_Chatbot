@@ -1,0 +1,131 @@
+/**
+ * Shared styles for SOILL web chat clients.
+ *
+ * **Created:** 07-06-2026 (UK style).
+ */
+
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+body.chat-page {
+  margin: 0;
+  background: #f4f6f8;
+  color: #1a1a1a;
+}
+
+.chat-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-container header {
+  margin-bottom: 1rem;
+}
+
+.chat-container header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.35rem;
+}
+
+.chat-container header p {
+  margin: 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+}
+
+.message {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  max-width: 90%;
+}
+
+.message.user {
+  align-self: flex-end;
+  background: #2563eb;
+  color: #fff;
+}
+
+.message.assistant {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid #dde3ea;
+}
+
+.message.error {
+  align-self: flex-start;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.sources {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+}
+
+.sources summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sources ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.sources li {
+  margin-bottom: 0.5rem;
+}
+
+#chat-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#message-input {
+  flex: 1;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font: inherit;
+}
+
+#chat-form button[type="submit"] {
+  padding: 0.65rem 1.1rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+#chat-form button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#status {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.5rem;
+}

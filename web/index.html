@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOILL Chatbot — API Test Client</title>
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body class="chat-page">
+  <div class="chat-container">
+    <header>
+      <h1>SOILL Chatbot</h1>
+      <p>
+        Test client for the FastAPI <code>/api/chat</code> endpoint.
+        <a href="demos.html">All testing options</a>
+      </p>
+    </header>
+
+    <div id="messages" aria-live="polite"></div>
+
+    <form id="chat-form">
+      <input
+        id="message-input"
+        type="text"
+        placeholder="Ask a question about EU Mission Soil Living Labs…"
+        autocomplete="off"
+        required
+      >
+      <button type="submit">Send</button>
+    </form>
+    <div id="status"></div>
+  </div>
+
+  <script src="chat.js"></script>
+</body>
+</html>

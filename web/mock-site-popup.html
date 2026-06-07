@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOILL Project — Mock site (floating popup)</title>
+  <link rel="stylesheet" href="mock-site.css">
+</head>
+<body class="mock-site">
+  <nav class="mock-nav">
+    <span class="brand">SOILL Project (mock)</span>
+    <a href="mock-site-popup.html">Mock project site — floating popup widget</a>
+    <a href="mock-site-page.html">Mock project site — dedicated chat page</a>
+    <a href="demos.html">Index of integration options</a>
+  </nav>
+
+  <main class="mock-main">
+    <h1>EU Mission Soil Living Labs</h1>
+    <p>
+      This page simulates a separate project website with a
+      <strong>floating chat button</strong> in the bottom-right corner (Approach 1).
+    </p>
+
+    <div class="mock-card">
+      <h2>Try it</h2>
+      <p>
+        Click the chat button at the bottom right of this page. The panel loads
+        the same chat UI in an iframe.
+      </p>
+      <p class="mock-note">
+        Press <kbd>Esc</kbd> or click the button again to close the panel.
+      </p>
+    </div>
+
+    <div class="mock-card">
+      <h2>Embed on your project site</h2>
+      <p>
+        Include the stylesheet and widget script on any page. Set
+        <code>data-chat-url</code> to your deployed chat page URL.
+      </p>
+      <pre style="overflow-x:auto;background:#f4f6f8;padding:1rem;border-radius:0.5rem;font-size:0.85rem;"><code>&lt;link rel="stylesheet" href="https://your-api-host/web/mock-site.css"&gt;
+&lt;script
+  src="https://your-api-host/web/widget-iframe.js"
+  data-chat-url="https://your-api-host/web/"&gt;
+&lt;/script&gt;</code></pre>
+      <p class="mock-note">
+        For a native widget (no iframe) that calls <code>POST /api/chat</code>
+        directly from your site, configure CORS on the API — see
+        <code>documents/deployment.md</code>.
+      </p>
+    </div>
+  </main>
+
+  <script
+    src="widget-iframe.js"
+    data-chat-url="index.html"
+  ></script>
+</body>
+</html>
