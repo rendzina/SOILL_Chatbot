@@ -29,6 +29,16 @@ load_dotenv(_ROOT / ".env")
 SOURCE_DOCUMENTS: Path = Path(
     os.environ.get("SOURCE_DOCUMENTS", str(_ROOT / "SourceDocuments"))
 )
+PDF_PREPROCESSING_ROOT: Path = Path(
+    os.environ.get("PDF_PREPROCESSING_ROOT", str(_ROOT / "PDFPreProcessing"))
+)
+OCR_INCOMING_DIR: Path = PDF_PREPROCESSING_ROOT / "IncomingScans"
+OCR_OUTPUT_DIR: Path = PDF_PREPROCESSING_ROOT / "OCR_Output"
+OCR_FAILED_DIR: Path = PDF_PREPROCESSING_ROOT / "OCR_Failed"
+OCR_LOGS_DIR: Path = PDF_PREPROCESSING_ROOT / "OCR_Processing" / "Logs"
+OCR_BATCH_SUMMARY_LOG: Path = OCR_LOGS_DIR / "batch-summary.log"
+OCR_LANGUAGE: str = os.environ.get("OCR_LANGUAGE", "eng").strip() or "eng"
+
 DATA_DIR: Path = _ROOT / "data"
 MANIFEST_PATH: Path = DATA_DIR / "manifest.json"
 SQL_INIT_PATH: Path = _ROOT / "sql" / "001_init.sql"
@@ -70,6 +80,8 @@ RAG_MMR_LAMBDA: float = min(
 )
 RAG_MMR_FETCH_MULT: int = min(8, max(2, int(os.environ.get("RAG_MMR_FETCH_MULT", "3"))))
 RAG_MMR_FETCH_CAP: int = min(64, max(12, int(os.environ.get("RAG_MMR_FETCH_CAP", "40"))))
+
+OCR_FORCE: bool = _env_bool("OCR_FORCE", False)
 
 SUPPORTED_SOURCE_EXTENSIONS: tuple[str, ...] = (".pdf", ".docx", ".txt")
 

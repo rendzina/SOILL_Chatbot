@@ -10,6 +10,7 @@ Key modules:
 | `rag.py` | Retrieval and Mistral chat completion |
 | `store_pg.py` | Postgres/pgvector storage |
 | `citations.py` | Parse citation markers from answers |
+| `ocr_preprocess.py` | Batch OCR for scanned PDFs (ocrmypdf) |
 | `conversation_log.py` | Persist Q&A to `soill_conversations` |
 
 *Author:* Professor Stephen Hallett, 5 June, 2026

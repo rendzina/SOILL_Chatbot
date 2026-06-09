@@ -71,3 +71,15 @@ apps/chatbot/.chainlit/*
 # -----------------------------------------------------------------------------
 SourceDocuments/*
 !SourceDocuments/.gitkeep
+
+# -----------------------------------------------------------------------------
+# OCR pre-processing (local scans and outputs — not indexed until promoted)
+# -----------------------------------------------------------------------------
+PDFPreProcessing/IncomingScans/*
+!PDFPreProcessing/IncomingScans/.gitkeep
+PDFPreProcessing/OCR_Output/*
+!PDFPreProcessing/OCR_Output/.gitkeep
+PDFPreProcessing/OCR_Failed/*
+!PDFPreProcessing/OCR_Failed/.gitkeep
+PDFPreProcessing/OCR_Processing/Logs/*
+!PDFPreProcessing/OCR_Processing/Logs/.gitkeep

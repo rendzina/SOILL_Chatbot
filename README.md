@@ -12,9 +12,10 @@ Monorepo for the SOILL / EU Mission Soil Living Labs public RAG assistant: **Cha
 | [`apps/chatbot/`](apps/chatbot/) | Chainlit web app (deployed on Render) |
 | [`apps/api/`](apps/api/) | FastAPI HTTP API (`POST /api/chat`) |
 | [`web/`](web/) | HTML/JS test client and website integration demos |
-| [`documents/`](documents/) | Deployment, architectural approach, and integration guides |
-| [`apps/admin/`](apps/admin/) | Local CLIs: ingest, schema init, PDF reports |
+| [`documents/`](documents/) | Deployment, architectural approach, OCR workflow, integration guides |
+| [`apps/admin/`](apps/admin/) | Local CLIs: OCR pre-processing, ingest, schema init, PDF reports |
 | [`SourceDocuments/`](SourceDocuments/) | Corpus for local ingestion (`.pdf`, `.docx`, `.txt`) |
+| [`PDFPreProcessing/`](PDFPreProcessing/) | OCR batch folders for scanned PDFs (before promotion to `SourceDocuments/`) |
 | [`sql/001_init.sql`](sql/001_init.sql) | Database schema and indexes |
 | [`render.yaml`](render.yaml) | Render blueprint (web service + Postgres) |
 
@@ -24,6 +25,7 @@ Monorepo for the SOILL / EU Mission Soil Living Labs public RAG assistant: **Cha
 - [uv](https://docs.astral.sh/uv/) for dependency management
 - Render Postgres (or any Postgres with **pgvector**)
 - Mistral API key
+- **`ocrmypdf`** (system install) — only for scanned or image-heavy PDFs; see [OCR workflow](documents/OCR_PDF_PreProcessingWorkflow.md)
 
 ## History
 
@@ -54,6 +56,7 @@ cp .env.example .env
 uv run soill-db-init
 
 # Add documents under SourceDocuments/, then ingest
+# (For scanned PDFs: OCR first — see documents/OCR_PDF_PreProcessingWorkflow.md)
 uv run soill-process
 
 # Run the chat UI (must use apps/chatbot as the app root so public/ assets resolve)
@@ -123,10 +126,14 @@ See [`documents/deployment.md`](documents/deployment.md) for production deployme
 | `uv run soill-process` | Incremental ingest from `SourceDocuments/` |
 | `uv run soill-process --dry-run` | Preview ingest changes |
 | `uv run soill-process --full-reset --i-know-this-wipes-data` | Wipe chunks/documents and re-ingest all files |
+| `uv run soill-ocr-preprocess` | Batch OCR for scans in `PDFPreProcessing/IncomingScans/` |
+| `uv run soill-ocr-preprocess --dry-run` | Preview OCR jobs without running ocrmypdf |
 | `uv run soill-report` | PDF export of `soill_conversations` to `Reports/` |
 | `uv run soill-report --from-date 2026-01-01 --to-date 2026-06-04` | Date-filtered report (UTC, inclusive) |
 
 Ingestion uses a local `data/manifest.json` (SHA-256 per file). Vectors live only in Postgres.
+
+For image-heavy or scanned PDFs, run OCR before ingest — see [`documents/OCR_PDF_PreProcessingWorkflow.md`](documents/OCR_PDF_PreProcessingWorkflow.md).
 
 ## Render deployment
 
@@ -152,6 +159,7 @@ See [`.env.example`](.env.example). Key settings:
 - `CHAT_HISTORY_*` — multi-turn chat and follow-up retrieval expansion
 - `LOG_CONVERSATIONS`, `LOG_CLIENT_METADATA`
 - `SOURCE_DOCUMENTS` — optional path override for ingest
+- `PDF_PREPROCESSING_ROOT`, `OCR_LANGUAGE`, `OCR_FORCE` — OCR batch pipeline (see [OCR workflow](documents/OCR_PDF_PreProcessingWorkflow.md))
 
 ## Privacy and logging
 
@@ -161,7 +169,9 @@ When `LOG_CONVERSATIONS=true`, each question and answer is stored in `soill_conv
 
 ```mermaid
 flowchart LR
-  SD[SourceDocuments] --> PF[soill-process]
+  scans[PDFPreProcessing] --> OCR[soill-ocr-preprocess]
+  OCR --> SD[SourceDocuments]
+  SD --> PF[soill-process]
   PF --> PG[(Postgres pgvector)]
   CL[Chainlit app] --> CS[ChatService]
   API[FastAPI /api/chat] --> CS
@@ -172,4 +182,4 @@ flowchart LR
   WEB[web test client] --> API
 ```
 
-Both Chainlit and the FastAPI endpoint call the same `ChatService` in `packages/soill`. Retrieval: embed the query (with optional history expansion for follow-ups) → pgvector cosine search → optional **MMR** on a larger candidate pool → Mistral chat with numbered citations → cited sources in the UI or API response.
+Both Chainlit and the FastAPI endpoint call the same `ChatService` in `packages/soill`. Scanned PDFs are OCR'd locally before ingest. Retrieval: embed the query (with optional history expansion for follow-ups) → pgvector cosine search → optional **MMR** on a larger candidate pool → Mistral chat with numbered citations → cited sources in the UI or API response.

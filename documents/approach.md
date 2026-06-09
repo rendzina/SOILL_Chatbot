@@ -23,6 +23,7 @@ Chainlit was used to build and test early prototypes; the **production path** ad
 | UI | Chainlit, `web/`, future project site | Presentation only |
 | Orchestration | `ChatService` in `packages/soill` | Query, citations, logging |
 | RAG / data | `rag.py`, `store_pg.py`, embeddings | Retrieval and persistence |
+| Corpus prep | `ocr_preprocess.py`, `soill-process` | OCR for scans, chunking, embedding, index updates |
 
 UI is separate from orchestration and from RAG/data. New frontends call `ChatService` (directly or via FastAPI) without copying business logic.
 
@@ -38,8 +39,10 @@ UI is separate from orchestration and from RAG/data. New frontends call `ChatSer
 - Shared monorepo (`soill` package)
 - Environment-driven configuration
 - Conversation logging to Postgres
-- Admin CLIs for ingest and reporting
+- Admin CLIs for **OCR pre-processing**, ingest, and reporting
 - Deployment guide and interactive demos
+
+Corpus preparation is a **local admin** step (not part of the deployed chat services): scanned PDFs go through `soill-ocr-preprocess` before `soill-process` indexes them. See [OCR_PDF_PreProcessingWorkflow.md](OCR_PDF_PreProcessingWorkflow.md).
 
 ### Integration flexibility
 
@@ -63,11 +66,18 @@ flowchart LR
     Site[Project website]
   end
 
+  subgraph admin [Local admin]
+    OCR[soill-ocr-preprocess]
+    Ingest[soill-process]
+  end
+
   API[FastAPI]
   CS[ChatService]
   RAG[rag.answer_question]
   PG[(Postgres + pgvector)]
 
+  OCR --> Ingest
+  Ingest --> PG
   CL --> CS
   Web --> API
   Site --> API
@@ -97,20 +107,18 @@ The design supports production; the gaps below are typical next steps, not archi
 
 ## Conclusion
 
-Observations, this approach is:
-
 **Flexible:** Yes — linked page, floating widget, or custom frontend without changing RAG logic.
 
 **Robust (architecturally):** Yes — layering and shared service are maintainable and professional.
 
-**Robust (production end-to-end):** Mostly — will still require adding tests, API protection, and monitoring before heavy public traffic.
+**Robust (production end-to-end):** Mostly — add tests, API protection, and monitoring before heavy public traffic.
 
-This repo offers a credible foundation for the SOILL public assistant: not over-engineered, aligned with common RAG chatbot evolution from prototype (Chainlit) to production (API + embed).
+This repo offers a credible foundation for the SOILL public assistant: not over-engineered, aligned with common RAG chatbot evolution from prototype (Chainlit) to production (API + embed), with OCR support carried forward from the earlier Giulia workflow.
 
 ---
 
 ## Related documents
 
-- [approach.md](approach.md) — architectural rationale and assessment
 - [deployment.md](deployment.md) — local testing, integration options, CORS, production deployment
+- [OCR_PDF_PreProcessingWorkflow.md](OCR_PDF_PreProcessingWorkflow.md) — batch OCR for scanned PDFs before ingest
 - [README](../README.md) — development setup, Chainlit, admin commands

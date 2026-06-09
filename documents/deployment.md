@@ -6,7 +6,7 @@ This document describes how to deploy the SOILL chatbot for use on a **separate 
 
 **Chainlit** (`apps/chatbot/`) was used to build and test the RAG prototypes — a full-screen chat UI that runs locally or on Render and is ideal for development and internal trials. It is not, however, the intended way to embed the chatbot on a public project website. This document, together with the integration demos in [`web/demos.html`](../web/demos.html), describes the **production path**: the FastAPI API, test clients, and several alternative approaches for integrating the chatbot into your site (dedicated chat page, floating popup widget, iframe embed, and direct API calls).
 
-For day-to-day development (Chainlit, ingest, admin commands), see the main [README](../README.md). For a rationale behind this architecture, see [approach.md](approach.md).
+For day-to-day development (Chainlit, ingest, OCR, admin commands), see the main [README](../README.md). For a rationale behind this architecture, see [approach.md](approach.md). For scanned PDFs before ingest, see [OCR_PDF_PreProcessingWorkflow.md](OCR_PDF_PreProcessingWorkflow.md).
 
 ## Quick start — try it locally
 
@@ -297,3 +297,11 @@ For an MVP, start with an **iframe** (either pattern). Move to a native JavaScri
 3. Deploy FastAPI to a subdomain with production CORS.
 4. Add the embed snippet to the project website.
 5. Keep Chainlit for internal testing, or retire it from public use once the widget is live.
+
+---
+
+## Related documents
+
+- [approach.md](approach.md) — architectural rationale and assessment
+- [OCR_PDF_PreProcessingWorkflow.md](OCR_PDF_PreProcessingWorkflow.md) — batch OCR for scanned PDFs (local admin, before ingest)
+- [README](../README.md) — development setup, Chainlit, admin commands

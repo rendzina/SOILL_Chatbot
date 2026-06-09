@@ -4,6 +4,9 @@ Ingest SourceDocuments into Postgres (pgvector).
 
 Re-run safely: only new or changed files are re-embedded; removed files are dropped.
 
+For image-heavy PDFs, run `uv run soill-ocr-preprocess` first — see
+documents/OCR_PDF_PreProcessingWorkflow.md.
+
 Flags:
   --dry-run — preview incremental changes only
   --dry-run-full-reset — preview full reset (read-only counts)
