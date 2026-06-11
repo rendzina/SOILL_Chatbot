@@ -4,6 +4,8 @@ Monorepo for the SOILL / EU Mission Soil Living Labs public RAG assistant: **Cha
 
 *Author:* Professor Stephen Hallett, 5 June, 2026
 
+*Contributors:* A. Khouakhi (Cranfield University) — local setup and database verification
+
 ## Repository layout
 
 | Path | Purpose |
