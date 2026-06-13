@@ -1,5 +1,8 @@
 /**
- * Load the SOILL chat popup widget from the FastAPI host.
+ * Load the SOILL chat popup on the demo site.
+ *
+ * Uses the polished chat UI bundled in ./chat/ and sends questions to
+ * SOILL_CHAT_API (Steve's backend or your own API deploy).
  *
  * **Created:** 10-06-2026 (UK style).
  */
@@ -10,14 +13,16 @@
     return;
   }
 
+  const base = document.currentScript.src.replace(/embed-chat\.js(\?.*)?$/, "");
+
   const widgetCss = document.createElement("link");
   widgetCss.rel = "stylesheet";
-  widgetCss.href = `${api}/web/mock-site.css`;
+  widgetCss.href = `${base}mock-site.css`;
   document.head.appendChild(widgetCss);
 
   const script = document.createElement("script");
-  script.src = `${api}/web/widget-iframe.js`;
-  script.setAttribute("data-chat-url", `${api}/web/`);
-  script.defer = true;
+  script.src = `${base}widget-iframe.js`;
+  const chatPage = `${base}chat/index.html?api=${encodeURIComponent(api)}`;
+  script.setAttribute("data-chat-url", chatPage);
   document.body.appendChild(script);
 })();
