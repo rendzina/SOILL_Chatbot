@@ -42,6 +42,7 @@ class ChatResponseBody(BaseModel):
     answer: str
     sources: list[ChatSourceResponse]
     session_id: str
+    suggested_questions: list[str] = Field(default_factory=list)
     error: Optional[str] = None
 
 
@@ -94,5 +95,6 @@ async def chat(request: Request, body: ChatRequest) -> ChatResponseBody:
         answer=response.answer,
         sources=[_to_source_response(s) for s in response.sources],
         session_id=session_id,
+        suggested_questions=response.suggested_questions or [],
         error=response.error,
     )

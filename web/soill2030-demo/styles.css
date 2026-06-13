@@ -1,0 +1,354 @@
+/**
+ * SOILL2030 main page — integration demo (unofficial mock).
+ *
+ * **Created:** 10-06-2026 (UK style).
+ */
+
+:root {
+  --soill-green: #1f4d3a;
+  --soill-green-dark: #163628;
+  --soill-green-light: #2f6b52;
+  --soill-accent: #8bc53f;
+  --soill-cream: #f6f4ef;
+  --soill-text: #1f2933;
+  --soill-muted: #5f6c72;
+  --soill-border: #dde5df;
+  --max-width: 1180px;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.55;
+  color: var(--soill-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #fff;
+}
+
+a {
+  color: var(--soill-green-light);
+}
+
+.demo-banner {
+  background: #fff3cd;
+  color: #664d03;
+  text-align: center;
+  padding: 0.55rem 1rem;
+  font-size: 0.88rem;
+  border-bottom: 1px solid #ffe69c;
+}
+
+.site-header {
+  background: #fff;
+  border-bottom: 1px solid var(--soill-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.site-header__inner,
+.section-inner,
+.footer-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 72px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--soill-green-dark);
+}
+
+.brand__mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.brand__text {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.main-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.92rem;
+}
+
+.main-nav a {
+  color: var(--soill-text);
+  text-decoration: none;
+  padding: 0.35rem 0;
+}
+
+.main-nav a:hover {
+  color: var(--soill-green-light);
+}
+
+.hero {
+  position: relative;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  background:
+    linear-gradient(115deg, rgba(22, 54, 40, 0.92), rgba(47, 107, 82, 0.78)),
+    url("https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1600&q=80")
+      center/cover no-repeat;
+}
+
+.hero__inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 3rem 1.25rem;
+}
+
+.hero__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  opacity: 0.9;
+  margin: 0 0 0.75rem;
+}
+
+.hero h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.8rem, 4vw, 2.75rem);
+  line-height: 1.15;
+  max-width: 16ch;
+}
+
+.hero p {
+  margin: 0 0 1.5rem;
+  max-width: 52ch;
+  font-size: 1.05rem;
+  opacity: 0.95;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.btn-primary {
+  background: var(--soill-accent);
+  color: var(--soill-green-dark);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.section {
+  padding: 3.5rem 0;
+}
+
+.section--cream {
+  background: var(--soill-cream);
+}
+
+.section__header {
+  margin-bottom: 2rem;
+}
+
+.section__header h2 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: var(--soill-green-dark);
+}
+
+.section__header p {
+  margin: 0;
+  color: var(--soill-muted);
+  max-width: 70ch;
+}
+
+.cards-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--soill-border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(22, 54, 40, 0.05);
+}
+
+.card h3 {
+  margin: 0 0 0.75rem;
+  color: var(--soill-green-dark);
+}
+
+.card p {
+  margin: 0;
+  color: var(--soill-muted);
+}
+
+.atlas {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.atlas__map {
+  min-height: 280px;
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, #dbeafe, #ecfdf5),
+    url("https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=80")
+      center/cover no-repeat;
+  border: 1px solid var(--soill-border);
+}
+
+.events-grid,
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.event-card,
+.news-card {
+  background: #fff;
+  border: 1px solid var(--soill-border);
+  border-radius: 0.85rem;
+  padding: 1.1rem 1.2rem;
+}
+
+.event-card time,
+.news-card time {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--soill-green-light);
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
+
+.event-card h3,
+.news-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.event-card p {
+  margin: 0.45rem 0 0;
+  color: var(--soill-muted);
+  font-size: 0.92rem;
+}
+
+.partners {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.partner {
+  background: #fff;
+  border: 1px solid var(--soill-border);
+  border-radius: 0.65rem;
+  padding: 0.85rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--soill-muted);
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+}
+
+.site-footer {
+  background: var(--soill-green-dark);
+  color: #fff;
+  padding: 3rem 0 1.5rem;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.site-footer h3 {
+  margin-top: 0;
+}
+
+.site-footer p,
+.site-footer li,
+.site-footer small {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.site-footer ul {
+  padding-left: 1.1rem;
+}
+
+.newsletter {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.newsletter input {
+  flex: 1;
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 1rem;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 900px) {
+  .cards-3,
+  .atlas,
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main-nav {
+    display: none;
+  }
+}

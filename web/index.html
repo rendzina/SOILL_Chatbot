@@ -3,32 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SOILL Chatbot — API Test Client</title>
+  <title>SOILL Assistant</title>
   <link rel="stylesheet" href="chat.css">
 </head>
 <body class="chat-page">
-  <div class="chat-container">
-    <header>
-      <h1>SOILL Chatbot</h1>
-      <p>
-        Test client for the FastAPI <code>/api/chat</code> endpoint.
-        <a href="demos.html">All testing options</a>
-      </p>
+  <div class="chat-shell">
+    <header class="chat-header">
+      <div class="chat-header__brand">
+        <img class="chat-header__logo" src="assets/soill-logo.jpg" alt="SOILL logo">
+        <div>
+          <h1>SOILL Assistant</h1>
+          <p class="chat-header__tagline">Mission Soil Living Labs, from start to scale</p>
+        </div>
+      </div>
+      <button type="button" id="new-chat-btn" class="chat-header__action" title="Start a new conversation">
+        New chat
+      </button>
     </header>
 
-    <div id="messages" aria-live="polite"></div>
+    <main class="chat-main">
+      <div id="welcome" class="welcome">
+        <p class="welcome__intro">
+          I can help you find information about EU Mission Soil Living Labs and
+          Lighthouses, SOILL support activities, and related project documents.
+          Choose a starter question or type your own below.
+        </p>
+        <div id="starter-prompts" class="starter-prompts" role="list"></div>
+      </div>
 
-    <form id="chat-form">
-      <input
-        id="message-input"
-        type="text"
-        placeholder="Ask a question about EU Mission Soil Living Labs…"
-        autocomplete="off"
-        required
-      >
-      <button type="submit">Send</button>
-    </form>
-    <div id="status"></div>
+      <div id="messages" class="messages" aria-live="polite"></div>
+    </main>
+
+    <footer class="chat-footer">
+      <form id="chat-form" class="chat-form">
+        <input
+          id="message-input"
+          type="text"
+          placeholder="Ask a question about Soil Health Living Labs…"
+          autocomplete="off"
+          required
+        >
+        <button type="submit" aria-label="Send message">
+          <span aria-hidden="true">↑</span>
+        </button>
+      </form>
+      <p class="chat-footer__disclaimer">
+        AI can make mistakes. Please verify important information. Content is
+        sourced from SOILL project documents. Powered by Mistral AI.
+      </p>
+      <p id="status" class="chat-footer__status"></p>
+    </footer>
   </div>
 
   <script src="chat.js"></script>
