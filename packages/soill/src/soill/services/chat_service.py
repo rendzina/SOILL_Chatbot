@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Sequence
 
 from .. import config as cfg
-from ..citations import sources_cited_in_answer
+from ..citations import sources_cited_in_answer, split_suggested_questions
 from ..chat_history import ChatTurn
 from ..conversation_log import log_interaction
 from ..rag import SourceRef, answer_question
@@ -28,6 +28,9 @@ class ChatSource:
     location_start: int
     location_end: int
     preview: str
+    title: str | None = None
+    public_url: str | None = None
+    is_public: bool = False
 
 
 @dataclass
@@ -35,6 +38,7 @@ class ChatResponse:
     answer: str
     sources: list[ChatSource]
     top_k: int
+    suggested_questions: list[str] | None = None
     error: str | None = None
 
 
@@ -49,6 +53,9 @@ def _source_ref_to_chat_source(source: SourceRef) -> ChatSource:
         location_start=source.location_start,
         location_end=source.location_end,
         preview=source.preview,
+        title=source.title,
+        public_url=source.public_url,
+        is_public=source.is_public,
     )
 
 
@@ -87,18 +94,20 @@ class ChatService:
                 error=str(exc),
             )
 
-        cited = sources_cited_in_answer(result.answer, result.sources)
+        answer_text, suggested = split_suggested_questions(result.answer)
+        cited = sources_cited_in_answer(answer_text, result.sources)
         chat_sources = [_source_ref_to_chat_source(s) for s in cited]
 
         log_interaction(
             question=text,
-            answer=result.answer,
+            answer=answer_text,
             cited_sources_count=len(chat_sources),
             client=client,
         )
 
         return ChatResponse(
-            answer=result.answer,
+            answer=answer_text,
             sources=chat_sources,
             top_k=result.top_k,
+            suggested_questions=suggested,
         )

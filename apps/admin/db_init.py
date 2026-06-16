@@ -15,7 +15,7 @@ def main() -> int:
     except Exception as exc:
         print(f"Schema initialisation failed: {exc}", file=sys.stderr)
         return 1
-    print(f"Schema applied from {cfg.SQL_INIT_PATH}", file=sys.stderr)
+    print(f"Schema applied from {cfg.SQL_INIT_PATH.parent}", file=sys.stderr)
     try:
         store_pg.ping_database()
         print("Database connection OK.", file=sys.stderr)

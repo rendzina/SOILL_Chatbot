@@ -41,7 +41,9 @@ OCR_LANGUAGE: str = os.environ.get("OCR_LANGUAGE", "eng").strip() or "eng"
 
 DATA_DIR: Path = _ROOT / "data"
 MANIFEST_PATH: Path = DATA_DIR / "manifest.json"
+SOURCE_CATALOG_PATH: Path = DATA_DIR / "source_catalog.json"
 SQL_INIT_PATH: Path = _ROOT / "sql" / "001_init.sql"
+SQL_SOURCE_CATALOG_PATH: Path = _ROOT / "sql" / "002_source_catalog.sql"
 REPORTS_DIR: Path = _ROOT / "Reports"
 
 DATABASE_URL: str = os.environ.get("DATABASE_URL", "")

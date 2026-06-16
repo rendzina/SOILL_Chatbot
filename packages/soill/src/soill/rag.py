@@ -28,7 +28,13 @@ SYSTEM_RAG = (
     "Answer only using the numbered context excerpts below. If the answer is not "
     "in the context, say you do not have enough information. "
     "Cite only context you actually rely on: place markers such as [1] or [2, 3] "
-    "immediately next to the sentences they support. "
+    "immediately next to the sentences they support. Use numeric markers only inside "
+    "brackets—do not add page numbers or paragraph symbols inside the brackets "
+    "(e.g. write [1], not [1, p. 3]). "
+    "Structure longer answers with Markdown: use ### only for a short section heading "
+    "(never #### or deeper). For lists use `- **Short title:** explanation [1]` — "
+    "do not prefix list items with #### or numbered headings like `1.` inside markdown "
+    "heading markers. Use blank lines between paragraphs. "
     "Where you cite, weave in the source file name and location (pages, lines, or "
     "paragraphs) in that same sentence or the next short phrase—do not add a separate "
     "closing section that lists every context number or reprints all filenames. "
@@ -37,7 +43,14 @@ SYSTEM_RAG = (
     "Earlier user and assistant turns may be included for follow-up questions only; "
     "interpret pronouns such as \"that\" or \"those\" from the prior turn when answering. "
     "Ground every factual claim in the numbered context excerpts, not in chat history alone. "
-    "Use UK English spelling in your answers."
+    "Use UK English spelling in your answers. "
+    "After the main answer, append exactly three concise follow-up questions the user "
+    "might ask next. Put them in this block (no citations inside the block):\n"
+    "<<SUGGESTED>>\n"
+    "- First follow-up question?\n"
+    "- Second follow-up question?\n"
+    "- Third follow-up question?\n"
+    "<<END>>"
 )
 
 _FOLLOWUP_HINTS = frozenset({
@@ -55,6 +68,9 @@ class SourceRef:
     location_start: int
     location_end: int
     preview: str
+    title: Optional[str] = None
+    public_url: Optional[str] = None
+    is_public: bool = False
 
 
 @dataclass
@@ -164,6 +180,9 @@ def retrieve(
         ch_ids_unique = chunk_ids_order[: min(top_k, len(chunk_ids_order))]
 
     rows = store_pg.fetch_chunks_by_ids(ch_ids_unique)
+    meta_by_path = store_pg.fetch_document_metadata_batch(
+        [str(r.get("source_path", "")) for r in rows]
+    )
     sources: list[SourceRef] = []
     context_lines: list[str] = []
     for n, r in enumerate(rows, start=1):
@@ -173,6 +192,10 @@ def retrieve(
         p1 = int(r.get("location_end", r.get("page_end", 0)))
         text = (r.get("text") or "").strip()
         preview = text[:280] + ("…" if len(text) > 280 else "")
+        doc_meta = meta_by_path.get(str(sp), {})
+        public_url = (str(doc_meta.get("public_url") or "")).strip() or None
+        is_public = bool(doc_meta.get("is_public")) and bool(public_url)
+        title = (str(doc_meta.get("title") or "")).strip() or None
         sources.append(
             SourceRef(
                 label=n,
@@ -182,6 +205,9 @@ def retrieve(
                 location_start=p0,
                 location_end=p1,
                 preview=preview,
+                title=title,
+                public_url=public_url if is_public else None,
+                is_public=is_public,
             )
         )
         base = os.path.basename(str(sp)) if sp else "unknown"

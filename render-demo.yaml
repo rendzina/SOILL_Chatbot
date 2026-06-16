@@ -1,0 +1,39 @@
+# Render blueprint — SOILL chatbot API + SOILL2030 integration demo site
+# Deploy from your Render dashboard: New > Blueprint > connect this repo.
+#
+# Before deploying the demo site, set web/soill2030-demo/config.js to your API URL.
+
+services:
+  - type: web
+    name: soill-chatbot-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: soill-postgres
+          property: connectionString
+      - key: LOG_CONVERSATIONS
+        value: "true"
+      - key: LOG_CLIENT_METADATA
+        value: "false"
+      - key: CHAT_HISTORY_ENABLED
+        value: "true"
+
+  - type: web
+    name: soill2030-demo
+    runtime: static
+    staticPublishPath: ./web/soill2030-demo
+
+databases:
+  - name: soill-postgres
+    plan: starter
+    databaseName: soill
+    user: soill
+    postgresMajorVersion: "16"
+    ipAllowList: []

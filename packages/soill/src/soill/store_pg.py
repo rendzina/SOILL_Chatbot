@@ -63,10 +63,75 @@ def run_sql_file(path: Path) -> None:
 
 
 def init_schema() -> None:
-    """Apply sql/001_init.sql idempotently."""
-    if not cfg.SQL_INIT_PATH.is_file():
-        raise FileNotFoundError(f"Schema file not found: {cfg.SQL_INIT_PATH}")
-    run_sql_file(cfg.SQL_INIT_PATH)
+    """Apply sql/*.sql migrations idempotently (001 init, 002 source catalog, …)."""
+    sql_dir = cfg.SQL_INIT_PATH.parent
+    if not sql_dir.is_dir():
+        raise FileNotFoundError(f"SQL directory not found: {sql_dir}")
+    for path in sorted(sql_dir.glob("*.sql")):
+        run_sql_file(path)
+
+
+def apply_source_catalog_schema() -> None:
+    """Apply source-catalog columns on documents (002_source_catalog.sql)."""
+    if not cfg.SQL_SOURCE_CATALOG_PATH.is_file():
+        raise FileNotFoundError(
+            f"Schema file not found: {cfg.SQL_SOURCE_CATALOG_PATH}"
+        )
+    run_sql_file(cfg.SQL_SOURCE_CATALOG_PATH)
+
+
+def list_document_paths() -> list[str]:
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT source_path FROM documents ORDER BY source_path"
+    ).fetchall()
+    return [str(r["source_path"]) for r in rows]
+
+
+def fetch_document_metadata(source_path: str) -> Optional[Dict[str, Any]]:
+    batch = fetch_document_metadata_batch([source_path])
+    return batch.get(source_path)
+
+
+def fetch_document_metadata_batch(
+    source_paths: Sequence[str],
+) -> Dict[str, Dict[str, Any]]:
+    paths = [str(p) for p in source_paths if p]
+    if not paths:
+        return {}
+    conn = get_connection()
+    cur = conn.execute(
+        """
+        SELECT source_path, title, public_url, is_public
+        FROM documents
+        WHERE source_path = ANY(%s)
+        """,
+        (paths,),
+    )
+    return {str(row["source_path"]): dict(row) for row in cur.fetchall()}
+
+
+def update_document_metadata(
+    source_path: str,
+    *,
+    title: Optional[str],
+    public_url: Optional[str],
+    is_public: bool,
+) -> bool:
+    """Update catalog fields for an ingested document. Returns False if not found."""
+    conn = get_connection()
+    cur = conn.execute(
+        """
+        UPDATE documents
+        SET title = %s,
+            public_url = %s,
+            is_public = %s
+        WHERE source_path = %s
+        """,
+        (title, public_url, is_public, source_path),
+    )
+    conn.commit()
+    return int(cur.rowcount or 0) > 0
 
 
 def count_chunks() -> int:

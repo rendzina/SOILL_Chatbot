@@ -36,12 +36,16 @@ class ChatSourceResponse(BaseModel):
     location_start: int
     location_end: int
     preview: str
+    title: Optional[str] = None
+    public_url: Optional[str] = None
+    is_public: bool = False
 
 
 class ChatResponseBody(BaseModel):
     answer: str
     sources: list[ChatSourceResponse]
     session_id: str
+    suggested_questions: list[str] = Field(default_factory=list)
     error: Optional[str] = None
 
 
@@ -55,6 +59,9 @@ def _to_source_response(source: ChatSource) -> ChatSourceResponse:
         location_start=source.location_start,
         location_end=source.location_end,
         preview=source.preview,
+        title=source.title,
+        public_url=source.public_url,
+        is_public=source.is_public,
     )
 
 
@@ -94,5 +101,6 @@ async def chat(request: Request, body: ChatRequest) -> ChatResponseBody:
         answer=response.answer,
         sources=[_to_source_response(s) for s in response.sources],
         session_id=session_id,
+        suggested_questions=response.suggested_questions or [],
         error=response.error,
     )

@@ -10,6 +10,44 @@ import re
 
 from .rag import SourceRef
 
+_SUGGESTED_BLOCK = re.compile(
+    r"<<SUGGESTED>>\s*(.*?)\s*<<END>>\s*$",
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+def split_suggested_questions(answer: str) -> tuple[str, list[str]]:
+    """
+    Separate the main answer from an optional <<SUGGESTED>>…<<END>> block.
+    Returns at most three follow-up questions for the UI.
+    """
+    text = (answer or "").strip()
+    if not text:
+        return "", []
+
+    match = _SUGGESTED_BLOCK.search(text)
+    if not match:
+        return text, []
+
+    main_answer = text[: match.start()].strip()
+    block = match.group(1).strip()
+    questions: list[str] = []
+
+    for line in block.splitlines():
+        cleaned = line.strip()
+        if not cleaned:
+            continue
+        if cleaned.startswith("- "):
+            cleaned = cleaned[2:].strip()
+        elif cleaned.startswith("* "):
+            cleaned = cleaned[2:].strip()
+        else:
+            cleaned = re.sub(r"^\d+\.\s+", "", cleaned)
+        if cleaned:
+            questions.append(cleaned)
+
+    return main_answer, questions[:3]
+
 
 def sources_cited_in_answer(answer: str, sources: list[SourceRef]) -> list[SourceRef]:
     """
