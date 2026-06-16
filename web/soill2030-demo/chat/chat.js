@@ -79,7 +79,7 @@ function renderCitationBadges(inner, sources) {
   return labels
     .map((label) => {
       const source = sources.find((item) => item.label === label);
-      const title = source ? source.filename : `Source ${label}`;
+      const title = source ? sourceDisplayName(source) : `Source ${label}`;
       return `<button type="button" class="citation-badge" data-source-label="${label}" title="${escapeHtml(title)}">${label}</button>`;
     })
     .join("");
@@ -176,6 +176,10 @@ function formatAssistantContent(text, sources) {
   return htmlParts.join("");
 }
 
+function sourceDisplayName(source) {
+  return source.title || source.filename || "Source";
+}
+
 function buildSourcesPanel(sources) {
   const panel = document.createElement("details");
   panel.className = "sources-panel";
@@ -195,17 +199,23 @@ function buildSourcesPanel(sources) {
 
     const title = document.createElement("div");
     title.className = "sources-panel__filename";
-    title.textContent = `${source.label}. ${source.filename}`;
+    title.textContent = `${source.label}. ${sourceDisplayName(source)}`;
 
     const meta = document.createElement("div");
     meta.className = "sources-panel__meta";
-    meta.textContent = formatLocation(source);
+    if (source.public_url) {
+      meta.innerHTML = `${escapeHtml(formatLocation(source))} · <a class="sources-panel__link" href="${escapeHtml(source.public_url)}" target="_blank" rel="noopener noreferrer">View public document</a>`;
+    } else {
+      meta.textContent = formatLocation(source);
+    }
+
+    item.append(title, meta);
 
     const preview = document.createElement("p");
     preview.className = "sources-panel__preview";
     preview.textContent = source.preview || "";
 
-    item.append(title, meta, preview);
+    item.appendChild(preview);
     list.appendChild(item);
   }
 
@@ -397,11 +407,14 @@ async function sendMessage(message) {
         data.sources,
         data.suggested_questions
       );
-      setStatus(
-        data.sources?.length
-          ? `Answered using ${data.sources.length} cited source(s).`
-          : "Answer ready."
-      );
+      const publicCount = (data.sources || []).filter((s) => s.public_url).length;
+      let statusText = data.sources?.length
+        ? `Answered using ${data.sources.length} cited source(s).`
+        : "Answer ready.";
+      if (publicCount > 0) {
+        statusText += ` Expand Sources below for ${publicCount} public link(s).`;
+      }
+      setStatus(statusText);
     }
   } catch (err) {
     pendingStatus.remove();

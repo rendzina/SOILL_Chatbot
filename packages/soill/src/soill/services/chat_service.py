@@ -28,6 +28,9 @@ class ChatSource:
     location_start: int
     location_end: int
     preview: str
+    title: str | None = None
+    public_url: str | None = None
+    is_public: bool = False
 
 
 @dataclass
@@ -50,6 +53,9 @@ def _source_ref_to_chat_source(source: SourceRef) -> ChatSource:
         location_start=source.location_start,
         location_end=source.location_end,
         preview=source.preview,
+        title=source.title,
+        public_url=source.public_url,
+        is_public=source.is_public,
     )
 
 

@@ -68,6 +68,9 @@ class SourceRef:
     location_start: int
     location_end: int
     preview: str
+    title: Optional[str] = None
+    public_url: Optional[str] = None
+    is_public: bool = False
 
 
 @dataclass
@@ -177,6 +180,9 @@ def retrieve(
         ch_ids_unique = chunk_ids_order[: min(top_k, len(chunk_ids_order))]
 
     rows = store_pg.fetch_chunks_by_ids(ch_ids_unique)
+    meta_by_path = store_pg.fetch_document_metadata_batch(
+        [str(r.get("source_path", "")) for r in rows]
+    )
     sources: list[SourceRef] = []
     context_lines: list[str] = []
     for n, r in enumerate(rows, start=1):
@@ -186,6 +192,10 @@ def retrieve(
         p1 = int(r.get("location_end", r.get("page_end", 0)))
         text = (r.get("text") or "").strip()
         preview = text[:280] + ("…" if len(text) > 280 else "")
+        doc_meta = meta_by_path.get(str(sp), {})
+        public_url = (str(doc_meta.get("public_url") or "")).strip() or None
+        is_public = bool(doc_meta.get("is_public")) and bool(public_url)
+        title = (str(doc_meta.get("title") or "")).strip() or None
         sources.append(
             SourceRef(
                 label=n,
@@ -195,6 +205,9 @@ def retrieve(
                 location_start=p0,
                 location_end=p1,
                 preview=preview,
+                title=title,
+                public_url=public_url if is_public else None,
+                is_public=is_public,
             )
         )
         base = os.path.basename(str(sp)) if sp else "unknown"

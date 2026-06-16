@@ -1,18 +1,20 @@
 /**
  * Chat API base URL (no trailing slash).
  *
- * This is where POST /api/chat is sent (Steve's database-backed API).
- *
- * Option A - Static demo on Render, your own API (recommended):
- *   Deploy a Web Service from apps/api/Dockerfile on YOUR Render account.
- *   Set this to that URL, e.g. https://soill-demo-api.onrender.com
- *   Also set env CORS_ALLOWED_ORIGINS to your static demo URL on that service.
- *
- * Option B - Everything on one API deploy (simplest):
- *   Deploy one Web Service, open https://YOUR-API.onrender.com/web/soill2030-demo/
- *   Set this to the same API URL.
- *
- * Option C - Steve's live API (needs Steve to allow CORS + redeploy new web/):
- *   https://soill-chatbot-api.onrender.com
+ * When the demo is opened from local uvicorn or Steve's API host, requests
+ * stay on the same origin. On a separate static host (e.g. soill2030-demo
+ * on Render), calls go to Steve's deployed API.
  */
-window.SOILL_CHAT_API = "https://soill-chatbot-api.onrender.com";
+(function () {
+  const STEVE_API = "https://soill-chatbot-api.onrender.com";
+  const host = window.location.hostname;
+  const sameOrigin = window.location.origin.replace(/\/$/, "");
+
+  if (host === "localhost" || host === "127.0.0.1") {
+    window.SOILL_CHAT_API = sameOrigin;
+  } else if (host === "soill-chatbot-api.onrender.com") {
+    window.SOILL_CHAT_API = sameOrigin;
+  } else {
+    window.SOILL_CHAT_API = STEVE_API;
+  }
+})();

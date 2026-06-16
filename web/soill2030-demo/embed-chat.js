@@ -1,19 +1,34 @@
 /**
  * Load the SOILL chat popup on the demo site.
  *
- * Uses the polished chat UI bundled in ./chat/ and sends questions to
- * SOILL_CHAT_API (Steve's backend or your own API deploy).
- *
  * **Created:** 10-06-2026 (UK style).
+ * **Updated:** 15-06-2026 — local demo uses /web/ on the same uvicorn host.
  */
 (function () {
-  const api = (window.SOILL_CHAT_API || "").replace(/\/$/, "");
+  const base = document.currentScript.src.replace(/embed-chat\.js(\?.*)?$/, "");
+  const pageOrigin = window.location.origin.replace(/\/$/, "");
+  const host = window.location.hostname;
+  const cacheBust = "v=20260617";
+  const isLocalDev = host === "localhost" || host === "127.0.0.1";
+
+  // Local uvicorn: always use this machine's API (ignore stale cached config.js).
+  let api = (window.SOILL_CHAT_API || "").replace(/\/$/, "");
+  if (isLocalDev) {
+    api = pageOrigin;
+    window.SOILL_CHAT_API = api;
+  }
+
   if (!api) {
     console.warn("SOILL_CHAT_API is not set in config.js");
     return;
   }
 
-  const base = document.currentScript.src.replace(/embed-chat\.js(\?.*)?$/, "");
+  let chatPage;
+  if (isLocalDev || api === pageOrigin) {
+    chatPage = `${pageOrigin}/web/index.html?${cacheBust}`;
+  } else {
+    chatPage = `${base}chat/index.html?api=${encodeURIComponent(api)}&${cacheBust}`;
+  }
 
   const widgetCss = document.createElement("link");
   widgetCss.rel = "stylesheet";
@@ -21,8 +36,7 @@
   document.head.appendChild(widgetCss);
 
   const script = document.createElement("script");
-  script.src = `${base}widget-iframe.js`;
-  const chatPage = `${base}chat/index.html?api=${encodeURIComponent(api)}`;
+  script.src = `${base}widget-iframe.js?${cacheBust}`;
   script.setAttribute("data-chat-url", chatPage);
   document.body.appendChild(script);
 })();

@@ -343,6 +343,20 @@ body.chat-page {
   color: var(--soill-muted);
 }
 
+.sources-panel__link {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--soill-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sources-panel__link:hover {
+  color: var(--soill-green);
+}
+
 .sources-panel__preview {
   margin: 0.45rem 0 0;
   font-size: 0.84rem;

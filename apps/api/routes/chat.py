@@ -36,6 +36,9 @@ class ChatSourceResponse(BaseModel):
     location_start: int
     location_end: int
     preview: str
+    title: Optional[str] = None
+    public_url: Optional[str] = None
+    is_public: bool = False
 
 
 class ChatResponseBody(BaseModel):
@@ -56,6 +59,9 @@ def _to_source_response(source: ChatSource) -> ChatSourceResponse:
         location_start=source.location_start,
         location_end=source.location_end,
         preview=source.preview,
+        title=source.title,
+        public_url=source.public_url,
+        is_public=source.is_public,
     )
 
 
