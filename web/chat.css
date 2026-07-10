@@ -267,10 +267,11 @@ body.chat-page {
 .message__actions {
   display: flex;
   justify-content: flex-end;
+  gap: 0.45rem;
   margin-top: 0.75rem;
 }
 
-.message__copy {
+.message__action {
   border: 1px solid var(--soill-border);
   background: #fff;
   color: var(--soill-muted);
@@ -278,6 +279,17 @@ body.chat-page {
   padding: 0.25rem 0.7rem;
   font-size: 0.78rem;
   cursor: pointer;
+}
+
+.message__action:hover {
+  color: var(--soill-green-dark);
+  border-color: #b7e4c7;
+}
+
+.message__action[aria-pressed="true"] {
+  color: var(--soill-green-dark);
+  background: var(--soill-mint);
+  border-color: #86c79a;
 }
 
 .sources-panel {
