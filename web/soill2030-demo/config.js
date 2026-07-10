@@ -1,13 +1,13 @@
 /**
  * Chat API base URL (no trailing slash).
  *
- * Path B (API + /web/ on one host): use same origin — localhost, Steve's
- * Render service, Cranfield Render, etc.
+ * Path B (API + /web/ on one host): use same origin — localhost, Cranfield
+ * Render, or any host that serves both /web/ and /api/chat.
  *
- * Path A (separate static demo only): call Steve's deployed API.
+ * Path A (separate static demo only): call the Cranfield production API.
  */
 (function () {
-  const STEVE_API = "https://soill-chatbot-api.onrender.com";
+  const PRODUCTION_API = "https://soill-chatbot-v2yj.onrender.com";
   const host = window.location.hostname;
   const sameOrigin = window.location.origin.replace(/\/$/, "");
 
@@ -15,7 +15,7 @@
   const REMOTE_API_HOSTS = new Set(["soill2030-demo.onrender.com"]);
 
   if (REMOTE_API_HOSTS.has(host)) {
-    window.SOILL_CHAT_API = STEVE_API;
+    window.SOILL_CHAT_API = PRODUCTION_API;
   } else {
     window.SOILL_CHAT_API = sameOrigin;
   }
