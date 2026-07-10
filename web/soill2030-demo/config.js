@@ -1,20 +1,22 @@
 /**
  * Chat API base URL (no trailing slash).
  *
- * When the demo is opened from local uvicorn or Steve's API host, requests
- * stay on the same origin. On a separate static host (e.g. soill2030-demo
- * on Render), calls go to Steve's deployed API.
+ * Path B (API + /web/ on one host): use same origin — localhost, Steve's
+ * Render service, Cranfield Render, etc.
+ *
+ * Path A (separate static demo only): call Steve's deployed API.
  */
 (function () {
   const STEVE_API = "https://soill-chatbot-api.onrender.com";
   const host = window.location.hostname;
   const sameOrigin = window.location.origin.replace(/\/$/, "");
 
-  if (host === "localhost" || host === "127.0.0.1") {
-    window.SOILL_CHAT_API = sameOrigin;
-  } else if (host === "soill-chatbot-api.onrender.com") {
-    window.SOILL_CHAT_API = sameOrigin;
-  } else {
+  // Hosts that serve only static files with no /api on the same origin.
+  const REMOTE_API_HOSTS = new Set(["soill2030-demo.onrender.com"]);
+
+  if (REMOTE_API_HOSTS.has(host)) {
     window.SOILL_CHAT_API = STEVE_API;
+  } else {
+    window.SOILL_CHAT_API = sameOrigin;
   }
 })();
