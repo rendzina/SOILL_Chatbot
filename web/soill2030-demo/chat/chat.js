@@ -54,6 +54,95 @@ function escapeHtml(text) {
   return el.innerHTML;
 }
 
+let activeReadButton = null;
+
+function speechSupported() {
+  return typeof window !== "undefined" && "speechSynthesis" in window;
+}
+
+function pickEnglishVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  return (
+    voices.find((voice) => voice.lang === "en-GB") ||
+    voices.find((voice) => voice.lang.startsWith("en-GB")) ||
+    voices.find((voice) => voice.lang.startsWith("en-")) ||
+    null
+  );
+}
+
+if (speechSupported()) {
+  window.speechSynthesis.addEventListener("voiceschanged", pickEnglishVoice);
+}
+
+function plainTextForSpeech(text) {
+  let value = (text || "").trim();
+  value = value.replace(/\[[^\]]*\]/g, "");
+  value = value.replace(/^#{1,6}\s+/gm, "");
+  value = value.replace(/\*\*([^*]+)\*\*/g, "$1");
+  value = value.replace(/\s+/g, " ");
+  return value.trim();
+}
+
+function stopReadAloud() {
+  if (!speechSupported()) {
+    return;
+  }
+  window.speechSynthesis.cancel();
+  if (activeReadButton) {
+    activeReadButton.textContent = "Read aloud";
+    activeReadButton.setAttribute("aria-pressed", "false");
+    activeReadButton = null;
+  }
+}
+
+function toggleReadAloud(text, button) {
+  if (!speechSupported()) {
+    button.textContent = "Not supported";
+    window.setTimeout(() => {
+      button.textContent = "Read aloud";
+    }, 2000);
+    return;
+  }
+
+  if (activeReadButton === button && button.getAttribute("aria-pressed") === "true") {
+    stopReadAloud();
+    return;
+  }
+
+  stopReadAloud();
+
+  const plain = plainTextForSpeech(text);
+  if (!plain) {
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(plain);
+  utterance.lang = "en-GB";
+  const voice = pickEnglishVoice();
+  if (voice) {
+    utterance.voice = voice;
+  }
+
+  utterance.onstart = () => {
+    activeReadButton = button;
+    button.textContent = "Stop";
+    button.setAttribute("aria-pressed", "true");
+  };
+
+  const resetButton = () => {
+    if (activeReadButton === button) {
+      activeReadButton = null;
+    }
+    button.textContent = "Read aloud";
+    button.setAttribute("aria-pressed", "false");
+  };
+
+  utterance.onend = resetButton;
+  utterance.onerror = resetButton;
+
+  window.speechSynthesis.speak(utterance);
+}
+
 function formatLocation(source) {
   const type = source.location_type || "page";
   return `${type}s ${source.location_start}–${source.location_end}`;
@@ -303,7 +392,7 @@ function appendMessage(role, content, sources, suggestedQuestions) {
 
     const copyBtn = document.createElement("button");
     copyBtn.type = "button";
-    copyBtn.className = "message__copy";
+    copyBtn.className = "message__action";
     copyBtn.textContent = "Copy";
     copyBtn.addEventListener("click", async () => {
       try {
@@ -316,7 +405,18 @@ function appendMessage(role, content, sources, suggestedQuestions) {
         copyBtn.textContent = "Copy failed";
       }
     });
-    actions.appendChild(copyBtn);
+
+    const readBtn = document.createElement("button");
+    readBtn.type = "button";
+    readBtn.className = "message__action";
+    readBtn.textContent = "Read aloud";
+    readBtn.setAttribute("aria-pressed", "false");
+    readBtn.setAttribute("aria-label", "Read this answer aloud");
+    readBtn.addEventListener("click", () => {
+      toggleReadAloud(content, readBtn);
+    });
+
+    actions.append(copyBtn, readBtn);
     div.appendChild(actions);
 
     if (sources && sources.length > 0) {
@@ -437,6 +537,7 @@ formEl.addEventListener("submit", async (event) => {
 });
 
 newChatBtn.addEventListener("click", () => {
+  stopReadAloud();
   clearSession();
   showWelcome();
   setStatus("New conversation started.");
