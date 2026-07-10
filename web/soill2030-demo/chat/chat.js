@@ -546,11 +546,15 @@ newChatBtn.addEventListener("click", () => {
 
 renderStarterPrompts();
 
+const isLocalDev =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
+
 const existingSession = getSessionId();
-setStatus(
-  existingSession
-    ? `Session restored (${existingSession.slice(0, 8)}…).`
-    : `Local test client. API: ${apiBase}/api/chat`
-);
+if (existingSession) {
+  setStatus(`Session restored (${existingSession.slice(0, 8)}…).`);
+} else if (isLocalDev) {
+  setStatus(`Local test client. API: ${apiBase}/api/chat`);
+}
 
 inputEl.focus();
