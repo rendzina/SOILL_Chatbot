@@ -316,7 +316,7 @@ def fetch_conversations(
     date_from: Optional[Any] = None,
     date_to: Optional[Any] = None,
 ) -> List[Dict[str, Any]]:
-    """Return conversation rows sorted by created_at ascending."""
+    """Return conversation rows sorted by created_at descending (newest first)."""
     clauses: list[str] = []
     params: list[Any] = []
     if date_from is not None:
@@ -329,7 +329,7 @@ def fetch_conversations(
     table = cfg.SOILL_CONVERSATIONS_TABLE
     conn = get_connection()
     cur = conn.execute(
-        f"SELECT * FROM {table}{where} ORDER BY created_at ASC",
+        f"SELECT * FROM {table}{where} ORDER BY created_at DESC",
         params,
     )
     return list(cur.fetchall())

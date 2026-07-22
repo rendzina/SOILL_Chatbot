@@ -46,12 +46,18 @@ _FONT_BOLD = "hebo"
 _BODY_SIZE = 8
 _META_SIZE = 7
 _SUBTITLE_SIZE = 9
-_TITLE_SIZE = 13
+_SECTION_SIZE = 11
+_TITLE_SIZE = 16
 _PAGE_W, _PAGE_H = 595, 842
 _MARGIN_X = 42
 _MARGIN_TOP = 40
 _MARGIN_BOTTOM = 52
 _CONTENT_BOTTOM = _PAGE_H - _MARGIN_BOTTOM - 22
+# Word cloud spans wider than body text, with a slim white page margin.
+_WORDCLOUD_MARGIN_X = 14
+_WORDCLOUD_DISPLAY_H = 200.0
+# High-res PNG sized to the same aspect as the on-page rect (avoids letterboxing).
+_WORDCLOUD_PNG_W = 1600
 
 # Inclusive selection span (calendar days) chooses chart granularity.
 _SPAN_USE_DAILY_BARS_MAX = 90
@@ -230,10 +236,14 @@ def _questions_wordcloud_png(rows: list[dict[str, Any]]) -> Optional[bytes]:
         "pdf",
     }
     stop = STOPWORDS | extra
+    display_w = _PAGE_W - 2 * _WORDCLOUD_MARGIN_X
+    png_h = max(
+        1, int(round(_WORDCLOUD_PNG_W * _WORDCLOUD_DISPLAY_H / display_w))
+    )
     try:
         wc = WordCloud(
-            width=1100,
-            height=480,
+            width=_WORDCLOUD_PNG_W,
+            height=png_h,
             background_color="white",
             max_words=70,
             colormap="viridis",
@@ -409,13 +419,13 @@ def _draw_time_series_bar_chart(
     label_gap = 20
     chart_h = 92
     page.insert_text(
-        (_MARGIN_X, y_top + 10),
+        (_MARGIN_X, y_top + 12),
         title,
-        fontname=_FONT,
-        fontsize=_SUBTITLE_SIZE,
-        color=(0, 0, 0),
+        fontname=_FONT_BOLD,
+        fontsize=_SECTION_SIZE,
+        color=(0.08, 0.08, 0.08),
     )
-    y0 = y_top + 22
+    y0 = y_top + 26
     if not bars:
         page.insert_text(
             (_MARGIN_X, y0 + 28),
@@ -493,6 +503,22 @@ class _PdfWriter:
             self._new_page()
         elif self._y + dy > _CONTENT_BOTTOM:
             self._new_page()
+
+    def section_heading(self, title: str) -> None:
+        """Draw a clear section heading (bold, larger than body text)."""
+        lh = _SECTION_SIZE * 1.45
+        self._ensure(lh + 8)
+        self._y += 4
+        p = self.page
+        assert p is not None
+        p.insert_text(
+            (_MARGIN_X, self._y),
+            title,
+            fontname=_FONT_BOLD,
+            fontsize=_SECTION_SIZE,
+            color=(0.08, 0.08, 0.08),
+        )
+        self._y += lh + 2
 
     def text_lines(
         self,
@@ -574,22 +600,24 @@ class _PdfWriter:
             lh = 0.0
 
         page.insert_text(
-            (title_x, _MARGIN_TOP + 26),
+            (title_x, _MARGIN_TOP + 28),
             "SOILL Public RAG Chatbot — Conversation Reporter",
-            fontname=_FONT,
+            fontname=_FONT_BOLD,
             fontsize=_TITLE_SIZE,
-            color=(0.08, 0.08, 0.08),
+            color=(0.05, 0.05, 0.05),
         )
         gen_s = generated_utc.strftime("%d-%m-%Y %H:%M UTC")
         page.insert_text(
-            (title_x, _MARGIN_TOP + 44),
+            (title_x, _MARGIN_TOP + 48),
             f"Generated: {gen_s}",
             fontname=_FONT,
             fontsize=_META_SIZE,
             color=(0.38, 0.38, 0.38),
         )
 
-        self._y = _MARGIN_TOP + max(lh, 52) + 14
+        self._y = _MARGIN_TOP + max(lh, 58) + 14
+
+        self.section_heading("Summary")
         for fl in filter_lines:
             self.text_lines([fl], size=_SUBTITLE_SIZE)
 
@@ -601,27 +629,27 @@ class _PdfWriter:
         self._y += 4
 
         wc_png = _questions_wordcloud_png(rows)
-        wc_h = 128.0
-        title_band = _SUBTITLE_SIZE * 1.38 + 6
+        wc_h = _WORDCLOUD_DISPLAY_H
+        title_band = _SECTION_SIZE * 1.45 + 10
         wc_block = title_band + wc_h + 14
         if self._y + wc_block > _CONTENT_BOTTOM:
             self._new_page()
 
         page = self.page
         assert page is not None
-        self.text_lines(
-            ["Question themes — word cloud (all user questions in this report)", ""],
-            size=_SUBTITLE_SIZE,
+        self.section_heading(
+            "Question themes · word cloud (of all user questions in this report)"
         )
         if wc_png:
             ir = fitz.Rect(
-                _MARGIN_X,
+                _WORDCLOUD_MARGIN_X,
                 self._y,
-                _PAGE_W - _MARGIN_X,
+                _PAGE_W - _WORDCLOUD_MARGIN_X,
                 self._y + wc_h,
             )
             try:
-                page.insert_image(ir, stream=wc_png)
+                # Aspect already matches the rect; keep_proportion avoids drift.
+                page.insert_image(ir, stream=wc_png, keep_proportion=True)
                 self._y += wc_h + 10
             except Exception as e:
                 logger.warning("Could not embed word cloud: %s", e)
@@ -640,7 +668,7 @@ class _PdfWriter:
             )
             self._y += 8
 
-        chart_h_est = 160.0
+        chart_h_est = 172.0
         if self._y + chart_h_est > _CONTENT_BOTTOM:
             self._new_page()
 
@@ -649,6 +677,7 @@ class _PdfWriter:
         ch_title, ch_bars, ch_foot = _build_time_series_chart(
             date_from, date_to, stats
         )
+        self._y += 4
         cb = _draw_time_series_bar_chart(
             page, self._y, ch_title, ch_bars, ch_foot, self.font
         )
@@ -701,7 +730,14 @@ def build_pdf(
         date_to=date_to,
         generated_utc=datetime.now(timezone.utc),
     )
-    writer.text_lines(["Conversation transcript", ""], size=_SUBTITLE_SIZE)
+    writer.section_heading("Conversation transcript")
+    writer.text_lines(
+        [
+            "Sorted by date with the newest queries first.",
+            "",
+        ],
+        size=_BODY_SIZE,
+    )
     writer.rule_before_transcript()
 
     if not rows:
