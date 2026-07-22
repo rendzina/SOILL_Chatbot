@@ -238,6 +238,38 @@ body.chat-page {
   margin-bottom: 0;
 }
 
+.message__body .answer-table-wrap {
+  margin: 0 0 0.85rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.message__body .answer-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.message__body .answer-table th,
+.message__body .answer-table td {
+  border: 1px solid var(--soill-border, #d6e0d9);
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.message__body .answer-table th {
+  background: var(--soill-mint, #e8f3ec);
+  color: var(--soill-green-dark, #1f4d36);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.message__body .answer-table tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.02);
+}
+
 .message__body strong {
   color: var(--soill-green-dark);
 }

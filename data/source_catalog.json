@@ -1,15 +1,10 @@
 {
   "version": 1,
-  "updated_utc": "2026-06-15T12:00:00+00:00",
+  "updated_utc": "2026-07-22T14:31:13.086371+00:00",
   "notes": "Keys must match documents.source_path exactly. Set is_public and public_url for published documents (e.g. Zenodo). Re-run uv run soill-source-catalog after edits.",
   "sources": {
     "Acronyms and definitions.docx": {
       "title": "Acronyms and definitions",
-      "is_public": false,
-      "public_url": null
-    },
-    "Classification of Soil Living Labs and Soil Lighthouses/D5.1 - Methodological framework for Soil Health LLs and LHs monitoring and evaluation.docx": {
-      "title": "D5.1 - Methodological framework for Soil Health LLs and LHs monitoring and evaluation",
       "is_public": false,
       "public_url": null
     },
@@ -18,18 +13,13 @@
       "is_public": true,
       "public_url": "https://zenodo.org/records/18466509"
     },
-    "Community guidelines for EU Mission Soil Living labs LLs/Community Management Guidelines - Mission Soil Living Labs.docx": {
-      "title": "Community Management Guidelines – Mission Soil Living Labs",
-      "is_public": false,
-      "public_url": null
-    },
     "Community guidelines for EU Mission Soil Living labs LLs/SOILL Community Management Guidelines - Mission Soil LLs.pdf": {
       "title": "SOILL Community Management Guidelines – Mission Soil Living Labs",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://doi.org/10.5281/zenodo.17939699"
     },
-    "Mission Soil Living Labs – Wave 1 and Wave 2/Mission Soil Living Labs Dataset – Wave 1 & Wave 2 (Public Version).docx": {
-      "title": "Mission Soil Living Labs Dataset – Wave 1 & Wave 2 (Public Version)",
+    "Mission Soil Living Labs – Wave 1 and Wave 2/SOILL-Startup_FundedProject&LLAnalysis_narratives.txt": {
+      "title": "SOILL-Startup funded project and Living Lab analysis narratives",
       "is_public": false,
       "public_url": null
     },
@@ -38,30 +28,25 @@
       "is_public": false,
       "public_url": null
     },
-    "SOILL Startup project/SOILL-Startup_D1.4 Technical Report_V1.0.pdf": {
-      "title": "D1.4 - SOILL-Startup Technical Report",
-      "is_public": false,
-      "public_url": null
-    },
     "SOILL project Hub/FAQ - Frequently Asked Questions/Atlas.ocr.pdf": {
       "title": "SOILL Hub FAQ – Atlas",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/it-help-cat-67b340c054f0c"
     },
     "SOILL project Hub/FAQ - Frequently Asked Questions/Living lab topics - general questions.ocr.pdf": {
       "title": "SOILL Hub FAQ – Living lab topics (general questions)",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/soill-support-cat-683d9831b94e8"
     },
     "SOILL project Hub/FAQ - Frequently Asked Questions/Mission Soil.ocr.pdf": {
       "title": "SOILL Hub FAQ – Mission Soil",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/soill-support-cat-683d97b07c258"
     },
     "SOILL project Hub/FAQ - Frequently Asked Questions/SOILL.pdf": {
       "title": "SOILL Hub FAQ – SOILL",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/soill-support-cat-683d985f6de9d"
     },
     "SOILL project Hub/Upcoming HORIZON Mission Soil Topic Calls/Call for proposal - Living labs to enhance soil health in Alpine and Atlantic biogeographical regions.docx": {
       "title": "Call for proposal – Living labs for soil health in Alpine and Atlantic biogeographical regions",
@@ -75,48 +60,43 @@
     },
     "SOILL project Hub/Upcoming HORIZON Mission Soil Topic Calls/Living Lab topic (WP25)- SOIL-01- two stage (BGR).ocr.pdf": {
       "title": "Living Lab topic (WP25) – SOIL-01 two stage (BGR)",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/soill-support-cat-6864a84bcc20b"
     },
     "SOILL project Hub/Upcoming HORIZON Mission Soil Topic Calls/Living Lab topic (WP25)- SOIL-01-single stage (brownfield).ocr.pdf": {
       "title": "Living Lab topic (WP25) – SOIL-01 single stage (brownfield)",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/soill-support-cat-6864a7b6cffdc"
     },
     "SOILL project Hub/Upcoming HORIZON Mission Soil Topic Calls/Living Lab topic (WP26)- SOIL-01-two stage (Alpine & Atlantic regions).ocr.pdf": {
       "title": "Living Lab topic (WP26) – SOIL-01 two stage (Alpine & Atlantic regions)",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/soill-support-cat-69ce7fc2be802"
     },
     "SOILL project Hub/Upcoming HORIZON Mission Soil Topic Calls/Living Lab topic (WP26)- SOIL-02-two stage (forests and natural lands).ocr.pdf": {
       "title": "Living Lab topic (WP26) – SOIL-02 two stage (forests and natural lands)",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/soill-support-cat-69ce81735144f"
     },
     "SOILL project Hub/Upcoming SOILL Project Events/Events.ocr.pdf": {
       "title": "SOILL Hub – Upcoming project events",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/it-help-cat-65ce2cd7ee190"
     },
     "SOILL project Hub/Using the SOILL Project Hub/Groups.ocr.ocr.pdf": {
       "title": "SOILL Hub – Using groups",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/it-help-cat-65ce2c688521f"
     },
     "SOILL project Hub/Using the SOILL Project Hub/Users and Profile.ocr.pdf": {
       "title": "SOILL Hub – Users and profile",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://soill2030.app/it-help-cat-65ce2c0963013"
     },
     "The Network of Mission Soil Living Labs/SOILL_AnnualReport_MissionSoilLLs_v1.pdf": {
       "title": "SOILL Annual Report – Mission Soil Living Labs",
-      "is_public": false,
-      "public_url": null
-    },
-    "The Network of Mission Soil Living Labs/The Network of Mission Soil Living Labs.docx": {
-      "title": "The Network of Mission Soil Living Labs",
-      "is_public": false,
-      "public_url": null
+      "is_public": true,
+      "public_url": "https://zenodo.org/records/17713355"
     }
   }
 }
