@@ -14,6 +14,7 @@ from .. import config as cfg
 from ..citations import sources_cited_in_answer, split_suggested_questions
 from ..chat_history import ChatTurn
 from ..conversation_log import log_interaction
+from ..markdown_tables import normalise_markdown_tables
 from ..rag import SourceRef, answer_question
 from ..user_identity import ClientMetadata
 
@@ -95,6 +96,7 @@ class ChatService:
             )
 
         answer_text, suggested = split_suggested_questions(result.answer)
+        answer_text = normalise_markdown_tables(answer_text)
         cited = sources_cited_in_answer(answer_text, result.sources)
         chat_sources = [_source_ref_to_chat_source(s) for s in cited]
 

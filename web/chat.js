@@ -256,12 +256,21 @@ function formatTableRow(cells) {
 
 /**
  * Models often emit a whole Markdown table on one line, joining rows with
- * "||" or "| |". Rebuild proper newline-separated rows from the header width.
+ * "||" or "| |", sometimes after an intro sentence on the same line.
+ * Rebuild proper newline-separated rows from the header width.
  */
 function expandCollapsedTableLine(line) {
   let trimmed = (line || "").trim();
   if ((trimmed.match(/\|/g) || []).length < 6 || !/-{2,}/.test(trimmed)) {
     return line;
+  }
+
+  // Peel off leading prose before the table starts
+  const tableStartMatch = trimmed.match(/\|\s*[^|]+\s*\|\s*[^|]+\s*\|/);
+  let prefix = "";
+  if (tableStartMatch && tableStartMatch.index > 0) {
+    prefix = trimmed.slice(0, tableStartMatch.index).trim();
+    trimmed = trimmed.slice(tableStartMatch.index).trim();
   }
 
   const sepMatch = trimmed.match(
@@ -278,6 +287,9 @@ function expandCollapsedTableLine(line) {
   }
 
   const headerCells = parseTableCells(before.startsWith("|") ? before : `| ${before}`);
+  while (headerCells.length > 1 && !headerCells[headerCells.length - 1]) {
+    headerCells.pop();
+  }
   const colCount = headerCells.length;
   if (colCount < 2) {
     return line;
@@ -286,7 +298,6 @@ function expandCollapsedTableLine(line) {
   const separator = formatTableRow(Array(colCount).fill("---"));
   const rows = [formatTableRow(headerCells), separator];
 
-  // Prefer explicit || row joins from the model
   let rowStrings = [];
   if (/\|\|/.test(after)) {
     rowStrings = after.split(/\|\|/).map((part) => {
@@ -303,7 +314,6 @@ function expandCollapsedTableLine(line) {
       return row;
     }).filter(Boolean);
   } else {
-    // Jammed rows without || — chunk cells, skipping empty boundary fillers
     const bodyCells = parseTableCells(after.startsWith("|") ? after : `| ${after}`);
     const cleaned = [];
     for (let i = 0; i < bodyCells.length; i += 1) {
@@ -336,7 +346,12 @@ function expandCollapsedTableLine(line) {
     rows.push(formatTableRow(cells.slice(0, colCount)));
   }
 
-  return rows.length >= 3 ? rows.join("\n") : line;
+  if (rows.length < 3) {
+    return line;
+  }
+
+  const table = rows.join("\n");
+  return prefix ? `${prefix}\n\n${table}` : table;
 }
 
 function formatMarkdownTable(lines, sources) {
