@@ -1,14 +1,25 @@
 # SOILL Chatbot — Deployment and website integration
 
-*Author:* Professor Stephen Hallett, 7 June 2026
+*Author:* Professor Stephen Hallett, 22 July 2026
 
 This document describes how to deploy the SOILL chatbot for use on a **separate project website**. It covers local testing, production architecture, and the two main integration patterns.
 
-**Chainlit** (`apps/chatbot/`) was used to build and test the RAG prototypes — a full-screen chat UI that runs locally or on Render and is ideal for development and internal trials. It is not, however, the intended way to embed the chatbot on a public project website. This document, together with the integration demos in [`web/demos.html`](../web/demos.html), describes the **production path**: the FastAPI API, test clients, and several alternative approaches for integrating the chatbot into your site (dedicated chat page, floating popup widget, iframe embed, and direct API calls).
+## Two frontends (same backend)
 
-For day-to-day development (Chainlit, ingest, OCR, admin commands), see the main [README](../README.md). For a rationale behind this architecture, see [approach.md](approach.md). For scanned PDFs before ingest, see [OCR_PDF_PreProcessingWorkflow.md](OCR_PDF_PreProcessingWorkflow.md).
+Both UIs call the shared `ChatService` in `packages/soill`. They are **siblings**, not parent/child — Chainlit does **not** call the FastAPI HTTP API.
 
-## Quick start — try it locally
+| Frontend | Purpose |
+|----------|---------|
+| **Chainlit** (`apps/chatbot/`) | Team testing and RAG prototypes (local and on Render) |
+| **FastAPI + `web/`** (`apps/api/`) | Production path for website embeds — widget, dedicated page, SOILL2030 demo |
+
+For a public project website (e.g. soill2030.eu), use the **FastAPI** service and the HTML/JS clients under `web/` — not Chainlit. See the same summary in the [README](../README.md#two-frontends-same-backend) and [approach.md](approach.md#two-frontends-same-backend).
+
+This document, together with the integration demos in [`web/demos.html`](../web/demos.html), focuses on the **production path**: the FastAPI API, test clients, and approaches for integrating the chatbot into your site (dedicated chat page, floating popup widget, iframe embed, and direct API calls).
+
+For day-to-day development (Chainlit, ingest, OCR, admin commands), see the main [README](../README.md). For a rationale behind this architecture, see [approach.md](approach.md). For scanned PDFs before ingest, see [OCR_PDF_PreProcessingWorkflow.md](OCR_PDF_PreProcessingWorkflow.md). For UI work without affecting live Render, see [local-ui-testing.md](local-ui-testing.md).
+
+## Quick start — to try it locally
 
 1. Start the API:
 
@@ -20,7 +31,7 @@ For day-to-day development (Chainlit, ingest, OCR, admin commands), see the main
 
    In production you still use uvicorn, but without `--reload`, with `--host 0.0.0.0` and your host’s port (see [Production deployment](#production-deployment) below).
 
-2. Open **[http://localhost:8080/web/demos.html](http://localhost:8080/web/demos.html)** and work through the steps in order — API docs, curl, then the HTML integration demos (full-page chat, dedicated page, floating popup).
+2. Open **[http://localhost:8080/web/demos.html](http://localhost:8080/web/demos.html)** and work through the steps in order — API docs, curl, then the HTML integration demos (full-page chat, dedicated page, floating popup, SOILL2030 mock).
 
 The rest of this document explains the architecture, integration patterns, CORS, and production deployment in more detail.
 
@@ -53,12 +64,12 @@ flowchart LR
 
 | Component | Role | Typical deployment |
 |-----------|------|-------------------|
-| **Chainlit** (`apps/chatbot/`) | Full-screen chat UI for testing and internal use | Render (current default) |
-| **FastAPI** (`apps/api/`) | HTTP API for external websites | Separate Render service or subdomain |
+| **Chainlit** (`apps/chatbot/`) | Full-screen chat UI for testing and internal use | Render via [`render.yaml`](../render.yaml) |
+| **FastAPI** (`apps/api/`) | HTTP API for external websites | Separate Render service (e.g. `soill-chatbot-api`) |
 | **ChatService** (`packages/soill/`) | RAG, citations, logging | Bundled with each app |
-| **Web clients** (`web/`) | Test pages and embeddable demos | Served by FastAPI at `/web/` |
+| **Web clients** (`web/`) | Test pages, embeddable demos, SOILL2030 mock | Served by FastAPI at `/web/` |
 
-Chainlit and the FastAPI API are **sibling frontends** — both call the same `ChatService`. The project website should use **FastAPI**, not Chainlit.
+Chainlit and the FastAPI API are **sibling frontends** — both call the same `ChatService`. Chainlit talks to `ChatService` in-process; web clients talk to FastAPI. The project website should use **FastAPI**, not Chainlit.
 
 ---
 
@@ -72,7 +83,10 @@ A chat button fixed to the bottom-right of every page opens a panel (usually an 
 
 **Best for:** keeping the chat available site-wide without dedicating a full page.
 
-**Local demo:** [http://localhost:8080/web/mock-site-popup.html](http://localhost:8080/web/mock-site-popup.html)
+**Local demos:**
+
+- [http://localhost:8080/web/mock-site-popup.html](http://localhost:8080/web/mock-site-popup.html)
+- [http://localhost:8080/web/soill2030-demo/](http://localhost:8080/web/soill2030-demo/) — polished mock of soill2030.eu with popup widget
 
 **Embed snippet (iframe widget):**
 
@@ -98,6 +112,7 @@ A normal site page (e.g. `/ask-soill`) or a link in the navigation opens the ful
 |------|-----|
 | Full chat page | [http://localhost:8080/web/](http://localhost:8080/web/) |
 | Mock site with link + iframe embed | [http://localhost:8080/web/mock-site-page.html](http://localhost:8080/web/mock-site-page.html) |
+| SOILL2030 site mock (popup) | [http://localhost:8080/web/soill2030-demo/](http://localhost:8080/web/soill2030-demo/) |
 
 **Option A — Link out:**
 
@@ -178,8 +193,9 @@ With the API running:
 | [http://localhost:8080/web/](http://localhost:8080/web/) | Full-page chat client |
 | [http://localhost:8080/web/mock-site-page.html](http://localhost:8080/web/mock-site-page.html) | Mock project site — dedicated chat page |
 | [http://localhost:8080/web/mock-site-popup.html](http://localhost:8080/web/mock-site-popup.html) | Mock project site — floating popup widget |
+| [http://localhost:8080/web/soill2030-demo/](http://localhost:8080/web/soill2030-demo/) | SOILL2030 site mock — popup widget (preview for soill2030.eu) |
 
-Try the full-page chat client first, then the two mock project sites to see how the chatbot could appear on a separate website.
+Try the full-page chat client first, then the mock project sites and SOILL2030 demo to see how the chatbot could appear on a separate website.
 
 ---
 
@@ -206,17 +222,25 @@ Never use `allow_origins=["*"]` with credentials in production.
 
 ### Recommended layout
 
+Typical setup uses **one Postgres database** and **two web services** (plus an optional static demo):
+
 | Service | Host example | Notes |
 |---------|--------------|-------|
-| Project website | `https://www.soill.eu` | Your existing CMS or static site |
-| Chat API | `https://chat-api.soill.eu` | FastAPI on Render (Docker or native) |
-| Chainlit (optional) | `https://chat-admin.soill.eu` | Internal/testing only; not required for public widget |
+| Project website | `https://www.soill2030.eu` | Your existing CMS or static site |
+| Chat API | `https://soill-chatbot-api.onrender.com` (or custom subdomain) | FastAPI on Render |
+| Chainlit | Render Chainlit service | Internal/testing only; not required for public widget |
+| SOILL2030 demo (optional) | Static site from `web/soill2030-demo/` | Preview embed before wiring the live CMS |
 
-Both services share the same **Postgres** database (`DATABASE_URL`) and **Mistral** API key.
+Chainlit and the API share the same **Postgres** database (`DATABASE_URL`) and **Mistral** API key.
 
 ### Deploy the FastAPI service
 
-1. Add a Render web service (or extend the blueprint) pointing at `apps/api/` with a start command such as:
+1. Add a Render web service using Docker (recommended):
+   - Context = repo root
+   - Dockerfile = [`apps/api/Dockerfile`](../apps/api/Dockerfile)
+   - Health check path = `/health`
+
+   Or run without Docker with a start command such as:
 
    ```bash
    uv run --directory apps/api uvicorn main:app --host 0.0.0.0 --port $PORT
@@ -224,11 +248,16 @@ Both services share the same **Postgres** database (`DATABASE_URL`) and **Mistra
 
 2. Set environment variables (same as Chainlit): `DATABASE_URL`, `MISTRAL_API_KEY`, `LOG_CONVERSATIONS`, etc.
 
-3. Configure CORS with your production website origin.
+3. Configure CORS with your production website origin (only needed for native JS `fetch`, not iframe embeds).
 
-4. Ensure the `web/` folder is included in the deployment context so `/web/` static files are served.
+4. Ensure the `web/` folder is included in the deployment context so `/web/` static files are served (the API Dockerfile already copies `web/`).
 
-The current [`render.yaml`](../render.yaml) deploys **Chainlit only**. Adding the API is a separate service definition.
+Blueprints:
+
+- [`render.yaml`](../render.yaml) — Chainlit + Postgres
+- [`render-demo.yaml`](../render-demo.yaml) — FastAPI API + SOILL2030 static demo (+ Postgres)
+
+You can also create the API service manually in the Render dashboard (as with `soill-chatbot-api`) while keeping Chainlit on its existing service.
 
 ### Embed on the project website
 
@@ -253,6 +282,8 @@ After the API is deployed at `https://chat-api.example.org`:
   style="width:100%;min-height:600px;border:none;">
 </iframe>
 ```
+
+For the polished SOILL2030 mock (local or as a static Render site), see [`web/soill2030-demo/`](../web/soill2030-demo/) and set `config.js` to your API URL when hosting separately from the API.
 
 ### Privacy and logging
 
@@ -284,19 +315,23 @@ For an MVP, start with an **iframe** (either pattern). Move to a native JavaScri
 | [`web/demos.html`](../web/demos.html) | Demo index |
 | [`web/mock-site-page.html`](../web/mock-site-page.html) | Dedicated page demo |
 | [`web/mock-site-popup.html`](../web/mock-site-popup.html) | Floating popup demo |
+| [`web/soill2030-demo/`](../web/soill2030-demo/) | SOILL2030 site mock with popup widget |
 | [`web/widget-iframe.js`](../web/widget-iframe.js) | Embeddable popup widget |
 | [`web/mock-site.css`](../web/mock-site.css) | Mock site and widget styles |
 | [`apps/api/`](../apps/api/) | FastAPI application |
+| [`apps/api/Dockerfile`](../apps/api/Dockerfile) | Docker image for the API on Render |
+| [`render.yaml`](../render.yaml) | Blueprint — Chainlit + Postgres |
+| [`render-demo.yaml`](../render-demo.yaml) | Blueprint — API + SOILL2030 static demo |
 
 ---
 
 ## Next steps
 
-1. Try both demos locally (`mock-site-page.html` and `mock-site-popup.html`).
+1. Try demos locally (`mock-site-page.html`, `mock-site-popup.html`, `soill2030-demo/`).
 2. Decide popup vs dedicated page (or both).
-3. Deploy FastAPI to a subdomain with production CORS.
+3. Keep or redeploy FastAPI on Render (`apps/api/Dockerfile` or `render-demo.yaml`); set production CORS if needed.
 4. Add the embed snippet to the project website.
-5. Keep Chainlit for internal testing, or retire it from public use once the widget is live.
+5. Keep Chainlit for internal testing; use FastAPI + `web/` for public embeds.
 
 ---
 
@@ -304,4 +339,5 @@ For an MVP, start with an **iframe** (either pattern). Move to a native JavaScri
 
 - [approach.md](approach.md) — architectural rationale and assessment
 - [OCR_PDF_PreProcessingWorkflow.md](OCR_PDF_PreProcessingWorkflow.md) — batch OCR for scanned PDFs (local admin, before ingest)
-- [README](../README.md) — development setup, Chainlit, admin commands
+- [local-ui-testing.md](local-ui-testing.md) — preview UI changes without affecting live Render
+- [README](../README.md) — development setup, two frontends, admin commands

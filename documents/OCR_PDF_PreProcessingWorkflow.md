@@ -1,9 +1,10 @@
 # OCR PDF pre-processing workflow (batch)
 
+*Author:* Professor Stephen Hallett, 22 July 2026
+
 Some PDFs are image-heavy and contain little or no direct extractable text, but they have text in images on the page. In that case, run OCR **before** ingestion so `soill-process` can chunk meaningful text. By default, if a given page already has extractable text, it is **not** re-OCR'd (`--skip-text`). Use `--force-ocr` when every page must be processed.
 
-**Created:** 9-06-2026 (UK style).  
-**Credits:** Professor Stephen Hallett, Cranfield University, 2026.
+This is a **local admin** step. It is independent of Chainlit and FastAPI — both frontends read the same Postgres index after you promote OCR outputs and run `soill-process`. See [Two frontends](../README.md#two-frontends-same-backend) in the README.
 
 ---
 
@@ -13,7 +14,7 @@ Some PDFs are image-heavy and contain little or no direct extractable text, but 
 - **`ocrmypdf`** on your PATH (system install, not a Python package in this repo):
   - macOS: `brew install ocrmypdf`
   - Debian/Ubuntu: `apt install ocrmypdf`
-- After promotion to `SourceDocuments/`, a Postgres database with pgvector — run `uv run soill-db-init` once, then ingest with `uv run soill-process`.
+- After promotion to `SourceDocuments/`, a Postgres database with pgvector — run `uv run soill-db-init` once (applies all `sql/*.sql`), then ingest with `uv run soill-process`.
 
 ---
 
@@ -108,7 +109,13 @@ uv run soill-process --dry-run
 uv run soill-process
 ```
 
-Start the chat UI or API only after ingestion succeeds — see the [main README](../README.md).
+Optional — if the document has a public landing page (e.g. Zenodo), update `data/source_catalog.json` and run:
+
+```bash
+uv run soill-source-catalog
+```
+
+Start Chainlit and/or the FastAPI API only after ingestion succeeds — see the [main README](../README.md). Both frontends will then search the newly indexed chunks.
 
 ---
 
@@ -130,6 +137,8 @@ Start the chat UI or API only after ingestion succeeds — see the [main README]
 | Shell wrapper | [`apps/admin/scripts/preprocess.sh`](../apps/admin/scripts/preprocess.sh) |
 | Paths and defaults | [`packages/soill/src/soill/config.py`](../packages/soill/src/soill/config.py) |
 
+Library logic lives in `packages/soill`; the admin CLI is a thin argparse wrapper (same pattern as other `soill-*` commands).
+
 ---
 
 ## Operational notes
@@ -143,5 +152,6 @@ Start the chat UI or API only after ingestion succeeds — see the [main README]
 ## Related documents
 
 - [README](../README.md) — quick start, admin commands, environment variables
-- [approach.md](approach.md) — architectural rationale
+- [approach.md](approach.md) — architectural rationale (corpus prep as local admin)
 - [deployment.md](deployment.md) — FastAPI deployment and website integration
+- [local-ui-testing.md](local-ui-testing.md) — preview web UI changes without affecting live Render

@@ -1,8 +1,21 @@
 # SOILL Chatbot — Architectural approach
 
-*Author:* Professor Stephen Hallett, 7 June 2026
+*Author:* Professor Stephen Hallett, 22 July 2026
 
 This note assesses the chatbot architecture with FastAPI integration. This description excludes final hosting and embed decisions (see [deployment.md](deployment.md) for those options).
+
+---
+
+## Two frontends (same backend)
+
+Both UIs call the shared `ChatService` in `packages/soill`. They are **siblings**, not parent/child — Chainlit does **not** call the FastAPI HTTP API.
+
+| Frontend | Purpose |
+|----------|---------|
+| **Chainlit** (`apps/chatbot/`) | Team testing and RAG prototypes (local and on Render) |
+| **FastAPI + `web/`** (`apps/api/`) | Production path for website embeds — widget, dedicated page, SOILL2030 demo |
+
+For a public project website (e.g. soill2030.eu), use the **FastAPI** service and the HTML/JS clients under `web/` — not Chainlit. See also the same summary in the main [README](../README.md#two-frontends-same-backend).
 
 ---
 
@@ -10,7 +23,7 @@ This note assesses the chatbot architecture with FastAPI integration. This descr
 
 For a domain-specific RAG chatbot of this scale, the current design offers a **sound, professional architecture**. It is genuinely **flexible**: multiple frontends can share one backend without duplicating RAG, citation, or logging logic. It is **architecturally robust** — clear layering, a shared service, and documented integration paths. It is **not yet fully hardened** for high-traffic or security-sensitive public use without further operational work (tests, rate limiting, monitoring). That follow-on work is normal; it does not undermine the design.
 
-Chainlit was used to build and test early prototypes; the **production path** adopted here now is FastAPI plus embeddable web clients (see [deployment.md](deployment.md) and [`web/demos.html`](../web/demos.html)).
+Chainlit remains available for internal trials; the **production path** for public embeds is FastAPI plus embeddable web clients (see [deployment.md](deployment.md), [`web/demos.html`](../web/demos.html), and [`web/soill2030-demo/`](../web/soill2030-demo/)).
 
 ---
 
@@ -20,16 +33,16 @@ Chainlit was used to build and test early prototypes; the **production path** ad
 
 | Layer | Location | Role |
 |-------|----------|------|
-| UI | Chainlit, `web/`, future project site | Presentation only |
+| UI | Chainlit (prototypes), `web/` / project site (production embeds) | Presentation only |
 | Orchestration | `ChatService` in `packages/soill` | Query, citations, logging |
 | RAG / data | `rag.py`, `store_pg.py`, embeddings | Retrieval and persistence |
 | Corpus prep | `ocr_preprocess.py`, `soill-process` | OCR for scans, chunking, embedding, index updates |
 
-UI is separate from orchestration and from RAG/data. New frontends call `ChatService` (directly or via FastAPI) without copying business logic.
+UI is separate from orchestration and from RAG/data. New frontends call `ChatService` (directly from Chainlit, or via FastAPI from web clients) without copying business logic.
 
 ### Sensible prototype → production path
 
-- **Chainlit** — full-screen UI for development, internal trials, and Render-based testing.
+- **Chainlit** — full-screen UI for development, internal trials, and Render-based testing. Still in active use for the team; not the intended public embed.
 - **FastAPI + embed options** — intended path for a public project website.
 - **Structured API responses** — `answer`, `sources`, `session_id` suit widgets, dedicated pages, and future clients.
 - **Session continuity** — `session_id` plus Postgres-backed history is appropriate for multi-turn public chat.
@@ -86,7 +99,7 @@ flowchart LR
   RAG --> PG
 ```
 
-Chainlit and FastAPI are **sibling frontends** — both use the same `ChatService`.
+Chainlit and FastAPI are **sibling frontends** — both use the same `ChatService`. Chainlit talks to `ChatService` in-process; web clients talk to FastAPI, which then calls `ChatService`. There is no Chainlit → FastAPI hop.
 
 ---
 

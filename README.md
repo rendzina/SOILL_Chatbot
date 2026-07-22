@@ -1,41 +1,52 @@
-# SOILL Public RAG Chatbot
+# SOILL project Public RAG Chatbot
 
-Monorepo for the SOILL / EU Mission Soil Living Labs public RAG assistant: **Chainlit** UI, **FastAPI** HTTP API, **Mistral** embeddings and chat, **PostgreSQL + pgvector** (no MongoDB or FAISS).
+Monorepo for the SOILL / EU Mission Soil Living Labs public RAG AI assistant: **Chainlit** UI, **FastAPI** HTTP API, **Mistral** embeddings and chat, **PostgreSQL + pgvector** (no longer using MongoDB or FAISS).
 
-*Author:* Professor Stephen Hallett, 5 June, 2026
+*Authors:* Professor Stephen Hallett, Dr Abdou Khouakhi. 22 June, 2026
 
-*Contributors:* A. Khouakhi (Cranfield University) — local setup and database verification
+## Two frontends (same backend)
 
-## Repository layout
+Both UIs call the shared `ChatService` in `packages/soill`. They are **siblings**, not parent/child — Chainlit does **not** call the FastAPI HTTP API.
+
+| Frontend | Purpose | How to run |
+|----------|---------|------------|
+| **Chainlit** (`apps/chatbot/`) | Team testing and RAG prototypes | `uv run --directory apps/chatbot chainlit run app.py` (also on Render) |
+| **FastAPI + `web/`** (`apps/api/`) | Production path for website embeds (widget, dedicated page, SOILL2030 demo) | `uv run --directory apps/api uvicorn main:app --port 8080` (also on Render) |
+
+For a public project website (e.g. soill2030.eu), use the **FastAPI** service and the HTML/JS clients under `web/` — not Chainlit.
+
+## Mono-Repository layout
 
 | Path | Purpose |
 |------|---------|
-| [`packages/soill/`](packages/soill/) | Shared library (chunking, embeddings, RAG, `ChatService`, Postgres store, logging) |
-| [`apps/chatbot/`](apps/chatbot/) | Chainlit web app (deployed on Render) |
-| [`apps/api/`](apps/api/) | FastAPI HTTP API (`POST /api/chat`) |
-| [`web/`](web/) | HTML/JS test client and website integration demos |
-| [`documents/`](documents/) | Deployment, architectural approach, OCR workflow, integration guides |
-| [`apps/admin/`](apps/admin/) | Local CLIs: OCR pre-processing, ingest, schema init, PDF reports |
+| [`packages/soill/`](packages/soill/) | Shared library (chunking, embeddings, RAG, `ChatService`, Postgres store, logging, OCR) |
+| [`apps/chatbot/`](apps/chatbot/) | Chainlit web app (Render: team testing / prototypes) |
+| [`apps/api/`](apps/api/) | FastAPI HTTP API (`POST /api/chat`) and Docker image for Render |
+| [`web/`](web/) | HTML/JS test clients, integration demos, and SOILL2030 site mock |
+| [`web/soill2030-demo/`](web/soill2030-demo/) | Polished mock of soill2030.eu with floating chat widget |
+| [`documents/`](documents/) | Deployment, architectural approach, OCR workflow, local UI testing |
+| [`apps/admin/`](apps/admin/) | Local CLIs: OCR, ingest, schema init, source catalogue, PDF reports |
 | [`SourceDocuments/`](SourceDocuments/) | Corpus for local ingestion (`.pdf`, `.docx`, `.txt`) |
 | [`PDFPreProcessing/`](PDFPreProcessing/) | OCR batch folders for scanned PDFs (before promotion to `SourceDocuments/`) |
-| [`sql/001_init.sql`](sql/001_init.sql) | Database schema and indexes |
-| [`render.yaml`](render.yaml) | Render blueprint (web service + Postgres) |
+| [`sql/`](sql/) | Database migrations (`001_init.sql`, `002_source_catalog.sql`, …) |
+| [`render.yaml`](render.yaml) | Render blueprint — Chainlit + Postgres |
+| [`render-demo.yaml`](render-demo.yaml) | Render blueprint — FastAPI API + SOILL2030 static demo |
 
 ## Requirements
 
-- Python **3.11–3.13** (Chainlit 2.11.x is not supported on 3.14)
+- Python **3.11–3.13** (Chainlit is not supported on 3.14)
 - [uv](https://docs.astral.sh/uv/) for dependency management
-- Render Postgres (or any Postgres with **pgvector**)
-- Mistral API key
+- Postgres (with **pgvector**)
+- Mistral AI
 - **`ocrmypdf`** (system install) — only for scanned or image-heavy PDFs; see [OCR workflow](documents/OCR_PDF_PreProcessingWorkflow.md)
 
 ## History
 
-This repo replaces the earlier 'Giulia' SOILL project chatbot. The technology stack for this chatbot differs from that and is now Mistral, Render.com and Postgres (served by Render) with pgvector.
+This repo replaces the earlier 'Giulia' SOILL project chatbot. The technology stack for this chatbot differs from that earlier version and is now Mistral, Render.com and Postgres (served by Render) with pgvector.
 
 ## Quick start (local testing deployment)
 
-- Ensure the postgres database exists on the server.
+- Ensure the postgres database exists
     - On running:
     uv run soill-db-init
     If the error is received:
@@ -54,22 +65,27 @@ uv sync --all-packages
 cp .env.example .env
 # Edit .env: DATABASE_URL, MISTRAL_API_KEY
 
-# Create tables and indexes (once per database)
+# Create tables and indexes (once per database; applies all sql/*.sql)
 uv run soill-db-init
 
 # Add documents under SourceDocuments/, then ingest
 # (For scanned PDFs: OCR first — see documents/OCR_PDF_PreProcessingWorkflow.md)
 uv run soill-process
 
-# Run the chat UI (must use apps/chatbot as the app root so public/ assets resolve)
+# Optional: sync public document titles/URLs from data/source_catalog.json
+uv run soill-source-catalog
+
+# Run the Chainlit UI (must use apps/chatbot as the app root so public/ assets resolve)
 uv run --directory apps/chatbot chainlit run app.py
 ```
 
-Open the URL shown in the terminal (default `http://localhost:8000`). Welcome images and logos are loaded from `apps/chatbot/public/` via `/public/...` paths in `chainlit.md`.
+For local testing, open the URL shown in the terminal (default `http://localhost:8000`). Welcome images and logos are loaded from `apps/chatbot/public/` via `/public/...` paths in `chainlit.md`.
+
+On Render, the team typically runs **two** web services: Chainlit (prototypes) and the FastAPI API (embeddable clients). See [Render deployment](#render-deployment) below.
 
 ## Testing the FastAPI API
 
-The HTTP API shares the same `ChatService` as the Chainlit app. It is intended for local development and future frontends (e.g. a JavaScript chat widget); Render deployment still runs Chainlit only (see below).
+The HTTP API shares the same `ChatService` as the Chainlit app. Use it for local development and for website embeds (JavaScript widget, dedicated chat page). On Render it is commonly deployed as a separate service (e.g. `soill-chatbot-api`).
 
 Start the API server:
 
@@ -115,21 +131,24 @@ With the API running:
 | [http://localhost:8080/web/](http://localhost:8080/web/) | Full-page chat client |
 | [http://localhost:8080/web/mock-site-page.html](http://localhost:8080/web/mock-site-page.html) | Mock project site — dedicated chat page |
 | [http://localhost:8080/web/mock-site-popup.html](http://localhost:8080/web/mock-site-popup.html) | Mock project site — floating popup widget |
+| [http://localhost:8080/web/soill2030-demo/](http://localhost:8080/web/soill2030-demo/) | SOILL2030 site mock — popup widget (preview for soill2030.eu) |
 
-Try the full-page chat client first, then the two mock project sites to see how the chatbot could appear on a separate website.
+Try the full-page chat client first, then the mock project sites and SOILL2030 demo to see how the chatbot could appear on a separate website.
 
-See [`documents/deployment.md`](documents/deployment.md) for production deployment, CORS, and embedding on a separate project website. See [`documents/approach.md`](documents/approach.md) for the architectural rationale.
+See [`documents/deployment.md`](documents/deployment.md) for production deployment, CORS, and embedding. See [`documents/approach.md`](documents/approach.md) for the architectural rationale. For UI work without affecting live Render, see [`documents/local-ui-testing.md`](documents/local-ui-testing.md).
 
 ## Admin commands
 
 | Command | Description |
 |---------|-------------|
-| `uv run soill-db-init` | Apply `sql/001_init.sql` (idempotent) |
+| `uv run soill-db-init` | Apply all `sql/*.sql` migrations (idempotent) |
 | `uv run soill-process` | Incremental ingest from `SourceDocuments/` |
 | `uv run soill-process --dry-run` | Preview ingest changes |
 | `uv run soill-process --full-reset --i-know-this-wipes-data` | Wipe chunks/documents and re-ingest all files |
 | `uv run soill-ocr-preprocess` | Batch OCR for scans in `PDFPreProcessing/IncomingScans/` |
 | `uv run soill-ocr-preprocess --dry-run` | Preview OCR jobs without running ocrmypdf |
+| `uv run soill-source-catalog` | Sync public titles/URLs from `data/source_catalog.json` into Postgres |
+| `uv run soill-source-catalog --dry-run` | Preview catalogue changes without writing |
 | `uv run soill-report` | PDF export of `soill_conversations` to `Reports/` |
 | `uv run soill-report --from-date 2026-01-01 --to-date 2026-06-04` | Date-filtered report (UTC, inclusive) |
 
@@ -139,17 +158,25 @@ For image-heavy or scanned PDFs, run OCR before ingest — see [`documents/OCR_P
 
 ## Render deployment
 
+Typical setup uses **one Postgres database** and **two web services**:
+
+| Service | Role | Blueprint / image |
+|---------|------|-------------------|
+| Chainlit | Team testing / prototypes | [`render.yaml`](render.yaml) → [`apps/chatbot/Dockerfile`](apps/chatbot/Dockerfile) |
+| FastAPI API | `POST /api/chat`, `/web/` demos, health `/health` | [`render-demo.yaml`](render-demo.yaml) or [`apps/api/Dockerfile`](apps/api/Dockerfile) |
+| SOILL2030 demo (optional) | Static mock site with chat widget | [`render-demo.yaml`](render-demo.yaml) → `web/soill2030-demo/` |
+
 1. Create a **Render Postgres** database and enable the **pgvector** extension (run `uv run soill-db-init` once using the **external** `DATABASE_URL` from the dashboard).
-2. Deploy with [`render.yaml`](render.yaml) or connect the repo manually:
-   - **Web service:** Docker, context = repo root, Dockerfile = `apps/chatbot/Dockerfile`
-   - Link `DATABASE_URL` from the Postgres instance
-   - Set `MISTRAL_API_KEY` in the dashboard
-3. Run `uv run soill-process` **locally** against the external database URL before go-live so the index is not empty.
-4. Optional: set `LOG_CLIENT_METADATA=false` on Render unless your privacy notice covers IP/User-Agent storage.
+2. Deploy Chainlit with [`render.yaml`](render.yaml) (or Docker: context = repo root, Dockerfile = `apps/chatbot/Dockerfile`).
+3. Deploy the API as a second web service (Docker: context = repo root, Dockerfile = `apps/api/Dockerfile`, health check `/health`), or use [`render-demo.yaml`](render-demo.yaml) for API + SOILL2030 static demo together.
+4. Link `DATABASE_URL` from the same Postgres instance on both services; set `MISTRAL_API_KEY` in the dashboard.
+5. Run `uv run soill-process` **locally** against the external database URL before go-live so the index is not empty.
+6. Optional: set `LOG_CLIENT_METADATA=false` on Render unless your privacy notice covers IP/User-Agent storage.
+7. For a separate project-website origin calling the API directly (not via iframe), add that origin to CORS in [`apps/api/main.py`](apps/api/main.py).
 
-Internal `DATABASE_URL` is for the web service; external URL is for local admin tools.
+Internal `DATABASE_URL` is for the web services; external URL is for local admin tools.
 
-The blueprint currently deploys **Chainlit only**. To deploy the FastAPI API and web embed demos for a project website, see [`documents/deployment.md`](documents/deployment.md).
+More detail: [`documents/deployment.md`](documents/deployment.md).
 
 ## Environment variables
 
@@ -181,7 +208,7 @@ flowchart LR
   CS --> Mistral[Mistral API]
   PF --> Mistral
   RP[soill-report] --> PG
-  WEB[web test client] --> API
+  WEB[web clients / SOILL2030 demo] --> API
 ```
 
-Both Chainlit and the FastAPI endpoint call the same `ChatService` in `packages/soill`. Scanned PDFs are OCR'd locally before ingest. Retrieval: embed the query (with optional history expansion for follow-ups) → pgvector cosine search → optional **MMR** on a larger candidate pool → Mistral chat with numbered citations → cited sources in the UI or API response.
+Both Chainlit and the FastAPI endpoint call the same `ChatService` in `packages/soill` (siblings — Chainlit does not call the HTTP API). Scanned PDFs are OCR'd locally before ingest. Retrieval: embed the query (with optional history expansion for follow-ups) → pgvector cosine search → optional **MMR** on a larger candidate pool → Mistral chat with numbered citations → cited sources in the UI or API response.
