@@ -8,7 +8,7 @@
   const base = document.currentScript.src.replace(/embed-chat\.js(\?.*)?$/, "");
   const pageOrigin = window.location.origin.replace(/\/$/, "");
   const host = window.location.hostname;
-  const cacheBust = "v=20260617";
+  const cacheBust = "v=20260722-tables";
   const isLocalDev = host === "localhost" || host === "127.0.0.1";
 
   // Local uvicorn: always use this machine's API (ignore stale cached config.js).
