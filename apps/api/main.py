@@ -15,8 +15,20 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import Response
 
 from routes.chat import router as chat_router
+
+
+class ShortCacheStaticFiles(StaticFiles):
+    """Force browsers to revalidate chat UI assets after each deploy."""
+
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        if isinstance(response, Response) and path.endswith((".js", ".css", ".html")):
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        return response
+
 
 _DEFAULT_ORIGINS = [
     "http://localhost:8080",
@@ -55,7 +67,11 @@ app.include_router(chat_router)
 
 _web_dir = Path(__file__).resolve().parents[2] / "web"
 if _web_dir.is_dir():
-    app.mount("/web", StaticFiles(directory=str(_web_dir), html=True), name="web")
+    app.mount(
+        "/web",
+        ShortCacheStaticFiles(directory=str(_web_dir), html=True),
+        name="web",
+    )
 
 
 @app.get("/health")
