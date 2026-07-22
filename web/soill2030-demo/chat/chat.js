@@ -218,6 +218,88 @@ function isListLine(line) {
   return /^[-*]\s+/.test(trimmed) || /^#{1,6}\s+/.test(trimmed);
 }
 
+function isTableSeparator(line) {
+  const trimmed = (line || "").trim();
+  if (!trimmed.includes("|") || !/-{2,}/.test(trimmed)) {
+    return false;
+  }
+  return /^[\s|:-]+$/.test(trimmed);
+}
+
+function isTableRow(line) {
+  const trimmed = (line || "").trim();
+  if (!trimmed || isTableSeparator(trimmed)) {
+    return false;
+  }
+  // Pipe tables: at least two cells
+  const pipes = (trimmed.match(/\|/g) || []).length;
+  return pipes >= 1 && /\|/.test(trimmed.slice(1, -1) || trimmed);
+}
+
+function isTableLine(line) {
+  return isTableSeparator(line) || isTableRow(line);
+}
+
+function parseTableCells(line) {
+  let trimmed = (line || "").trim();
+  if (trimmed.startsWith("|")) {
+    trimmed = trimmed.slice(1);
+  }
+  if (trimmed.endsWith("|")) {
+    trimmed = trimmed.slice(0, -1);
+  }
+  return trimmed.split("|").map((cell) => cell.trim());
+}
+
+function formatMarkdownTable(lines, sources) {
+  const dataLines = lines.filter((line) => !isTableSeparator(line));
+  if (dataLines.length === 0) {
+    return "";
+  }
+
+  const header = parseTableCells(dataLines[0]);
+  const bodyRows = dataLines.slice(1).map(parseTableCells);
+  const colCount = Math.max(
+    header.length,
+    ...bodyRows.map((row) => row.length),
+    1
+  );
+
+  const pad = (cells) => {
+    const next = cells.slice(0, colCount);
+    while (next.length < colCount) {
+      next.push("");
+    }
+    return next;
+  };
+
+  let html = '<div class="answer-table-wrap"><table class="answer-table"><thead><tr>';
+  for (const cell of pad(header)) {
+    html += `<th>${formatInline(cell, sources, true)}</th>`;
+  }
+  html += "</tr></thead><tbody>";
+  for (const row of bodyRows) {
+    html += "<tr>";
+    for (const cell of pad(row)) {
+      html += `<td>${formatInline(cell, sources, true)}</td>`;
+    }
+    html += "</tr>";
+  }
+  html += "</tbody></table></div>";
+  return html;
+}
+
+function isTableBlock(lines) {
+  if (lines.length < 2) {
+    return false;
+  }
+  if (!lines.every((line) => isTableLine(line))) {
+    return false;
+  }
+  // Prefer a real GFM header + separator, but also accept 2+ pipe rows
+  return lines.some(isTableSeparator) || lines.filter(isTableRow).length >= 2;
+}
+
 function preprocessAnswerText(text) {
   let value = (text || "").trim().replace(/\r\n/g, "\n");
   value = value.replace(/\s+(?=####\s+\d+[.)])/g, "\n");
@@ -232,19 +314,38 @@ function formatAssistantContent(text, sources) {
     return "";
   }
 
-  const blocks = normalised.split(/\n\s*\n/);
-  const htmlParts = [];
+  const rawBlocks = normalised.split(/\n\s*\n/);
+  const blocks = [];
 
-  for (const block of blocks) {
+  for (const block of rawBlocks) {
     const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
     if (lines.length === 0) {
       continue;
     }
+    // Merge consecutive pipe-table fragments split by blank lines
+    if (
+      blocks.length > 0 &&
+      isTableBlock(blocks[blocks.length - 1]) &&
+      lines.every((line) => isTableLine(line))
+    ) {
+      blocks[blocks.length - 1] = blocks[blocks.length - 1].concat(lines);
+      continue;
+    }
+    blocks.push(lines);
+  }
 
+  const htmlParts = [];
+
+  for (const lines of blocks) {
     if (lines.length === 1 && /^#{1,6}\s+/.test(lines[0]) && !/^#{1,6}\s+\d+[.)]/.test(lines[0])) {
       htmlParts.push(
         `<h3 class="answer-heading">${formatInline(stripMarkdownHeading(lines[0]), sources, true)}</h3>`
       );
+      continue;
+    }
+
+    if (isTableBlock(lines)) {
+      htmlParts.push(formatMarkdownTable(lines, sources));
       continue;
     }
 
