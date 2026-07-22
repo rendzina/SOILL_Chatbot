@@ -190,6 +190,12 @@ function formatListItem(line, sources) {
     content = numbered[2].trim();
   }
 
+  // Inline "label: detail" inside a bullet — keep as one list item
+  const colonSplit = content.match(/^\*\*([^*]+)\*\*:\s+(.+)$/);
+  if (colonSplit) {
+    return `<strong>${formatInline(colonSplit[1].trim(), sources, true)}:</strong> ${formatInline(colonSplit[2].trim(), sources, true)}`;
+  }
+
   const titled = content.match(/^(.{1,90}?)\s*[-–—]\s+(.+)$/);
   if (titled) {
     return `<strong>${formatInline(titled[1].trim(), sources, true)}</strong> ${formatInline(titled[2].trim(), sources, true)}`;
@@ -213,9 +219,171 @@ function formatInline(text, sources, skipHeadingStrip = false) {
   return html;
 }
 
-function isListLine(line) {
+function plainListText(line) {
+  return stripMarkdownHeading(stripBulletPrefix(line))
+    .replace(/\*\*/g, "")
+    .replace(/\[[^\]]+\]/g, "")
+    .trim();
+}
+
+/**
+ * Section subtitle: bold/plain title ending with a colon, or a short heading-like
+ * bullet with no sentence body (common model slip).
+ */
+function isSectionSubtitleLine(line, nextLine, prevLine) {
   const trimmed = (line || "").trim();
-  return /^[-*]\s+/.test(trimmed) || /^#{1,6}\s+/.test(trimmed);
+  if (!trimmed || isTableLine(trimmed)) {
+    return false;
+  }
+  if (/^#{1,6}\s+/.test(trimmed) && !/^#{1,6}\s+\d+[.)]/.test(trimmed)) {
+    return false; // real ### heading handled separately
+  }
+
+  const content = stripMarkdownHeading(stripBulletPrefix(trimmed)).trim();
+
+  if (/^\*\*[^*]+\*\*:?\s*$/.test(content)) {
+    return true;
+  }
+  if (/^[^:*]{2,90}:\s*$/.test(content.replace(/\*\*/g, ""))) {
+    return true;
+  }
+
+  // Detail bullets keep citations or inline bold+explanation
+  if (/\[[0-9]/.test(content)) {
+    return false;
+  }
+  if (/\*\*[^*]+\*\*\s+\S/.test(content)) {
+    return false;
+  }
+
+  const plain = plainListText(trimmed);
+  const wordCount = plain.split(/\s+/).filter(Boolean).length;
+  const isShortHeading =
+    /^[-*]\s+/.test(trimmed) &&
+    plain.length > 0 &&
+    plain.length <= 70 &&
+    wordCount <= 10 &&
+    !/[.!?]$/.test(plain);
+
+  if (!isShortHeading) {
+    return false;
+  }
+
+  // Imperative detail lines without a trailing period
+  if (
+    /^(Apply|Assemble|Use|Show|Describe|Highlight|Diversify|Ensure|Include|Provide|Create|Develop|Deploy|Follow the|Plan for)\b/i.test(
+      plain
+    ) &&
+    wordCount >= 5
+  ) {
+    return false;
+  }
+
+  const nextIsBullet = nextLine && /^[-*]\s+/.test(nextLine.trim());
+  const nextPlain = nextLine ? plainListText(nextLine) : "";
+  const nextIsLongDetail =
+    nextIsBullet && (nextPlain.length > plain.length + 15 || /[.!?]/.test(nextPlain) || /\[[0-9]/.test(nextLine));
+  const nextIsShortHeading =
+    nextIsBullet &&
+    nextPlain.length > 0 &&
+    nextPlain.length <= 70 &&
+    nextPlain.split(/\s+/).filter(Boolean).length <= 10 &&
+    !/[.!?]$/.test(nextPlain) &&
+    !/\[[0-9]/.test(nextLine || "");
+  const prevPlain = prevLine ? plainListText(prevLine) : "";
+  const prevIsLongDetail =
+    prevLine &&
+    /^[-*]\s+/.test(prevLine.trim()) &&
+    (prevPlain.length > 80 || /[.!?]/.test(prevPlain) || /\[[0-9]/.test(prevLine));
+
+  if (!prevLine && nextIsBullet) {
+    return true;
+  }
+  if (nextIsLongDetail || nextIsShortHeading) {
+    return true;
+  }
+  if (prevIsLongDetail && nextIsLongDetail) {
+    return true;
+  }
+
+  return false;
+}
+
+function subtitleLabel(line) {
+  let content = stripMarkdownHeading(stripBulletPrefix(line)).trim();
+  const bold = content.match(/^\*\*([^*]+)\*\*:?\s*$/);
+  if (bold) {
+    content = bold[1].trim();
+  } else {
+    content = content.replace(/\*\*/g, "").replace(/:\s*$/, "").trim();
+  }
+  if (!content.endsWith(":")) {
+    content = `${content}:`;
+  }
+  return content;
+}
+
+function formatSubtitle(line, sources) {
+  const label = subtitleLabel(line);
+  const core = label.endsWith(":") ? label.slice(0, -1) : label;
+  return `<p class="answer-subtitle"><strong>${formatInline(core, sources, true)}:</strong></p>`;
+}
+
+function isListLine(line) {
+  return /^[-*]\s+/.test((line || "").trim());
+}
+
+function formatStructuredListBlock(lines, sources) {
+  let html = "";
+  let listOpen = false;
+
+  const closeList = () => {
+    if (listOpen) {
+      html += "</ul>";
+      listOpen = false;
+    }
+  };
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const next = lines[i + 1];
+    const prev = lines[i - 1];
+
+    if (/^#{1,6}\s+/.test(line) && !/^#{1,6}\s+\d+[.)]/.test(line)) {
+      closeList();
+      html += `<h3 class="answer-heading">${formatInline(stripMarkdownHeading(line), sources, true)}</h3>`;
+      continue;
+    }
+
+    if (isSectionSubtitleLine(line, next, prev)) {
+      closeList();
+      html += formatSubtitle(line, sources);
+      continue;
+    }
+
+    if (isListLine(line)) {
+      if (!listOpen) {
+        html += '<ul class="answer-list">';
+        listOpen = true;
+      }
+      html += `<li>${formatListItem(line, sources)}</li>`;
+      continue;
+    }
+
+    closeList();
+    const lone = line.trim();
+    if (
+      /^\*\*[^*]+\*\*:?\s*$/.test(lone) ||
+      /^[^:*]{2,90}:\s*$/.test(lone.replace(/\*\*/g, ""))
+    ) {
+      html += formatSubtitle(line, sources);
+    } else {
+      html += `<p class="answer-paragraph">${formatInline(stripMarkdownHeading(line), sources, true)}</p>`;
+    }
+  }
+
+  closeList();
+  return html;
 }
 
 function isTableSeparator(line) {
@@ -450,16 +618,26 @@ function formatAssistantContent(text, sources) {
       continue;
     }
 
+    if (
+      lines.length === 1 &&
+      ( /^\*\*[^*]+\*\*:?\s*$/.test(lines[0]) ||
+        /^[^:*]{2,90}:\s*$/.test(lines[0].replace(/\*\*/g, "")) )
+    ) {
+      htmlParts.push(formatSubtitle(lines[0], sources));
+      continue;
+    }
+
     if (isTableBlock(lines)) {
       htmlParts.push(formatMarkdownTable(lines, sources));
       continue;
     }
 
-    if (lines.every((line) => isListLine(line))) {
-      const items = lines
-        .map((line) => `<li>${formatListItem(line, sources)}</li>`)
-        .join("");
-      htmlParts.push(`<ul class="answer-list">${items}</ul>`);
+    // Mixed heading / subtitle / bullet blocks
+    if (
+      lines.some((line) => isListLine(line) || /^#{1,6}\s+/.test(line)) ||
+      lines.some((line, idx) => isSectionSubtitleLine(line, lines[idx + 1], lines[idx - 1]))
+    ) {
+      htmlParts.push(formatStructuredListBlock(lines, sources));
       continue;
     }
 
