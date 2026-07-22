@@ -231,7 +231,6 @@ function isTableRow(line) {
   if (!trimmed || isTableSeparator(trimmed)) {
     return false;
   }
-  // Pipe tables: at least two cells
   const pipes = (trimmed.match(/\|/g) || []).length;
   return pipes >= 1 && /\|/.test(trimmed.slice(1, -1) || trimmed);
 }
@@ -249,6 +248,95 @@ function parseTableCells(line) {
     trimmed = trimmed.slice(0, -1);
   }
   return trimmed.split("|").map((cell) => cell.trim());
+}
+
+function formatTableRow(cells) {
+  return `| ${cells.map((cell) => cell || "").join(" | ")} |`;
+}
+
+/**
+ * Models often emit a whole Markdown table on one line, joining rows with
+ * "||" or "| |". Rebuild proper newline-separated rows from the header width.
+ */
+function expandCollapsedTableLine(line) {
+  let trimmed = (line || "").trim();
+  if ((trimmed.match(/\|/g) || []).length < 6 || !/-{2,}/.test(trimmed)) {
+    return line;
+  }
+
+  const sepMatch = trimmed.match(
+    /\|[\t ]*[-:]{2,}[\t :|-]*(?:\|[\t ]*[-:]{2,}[\t :|-]*)*\|?/
+  );
+  if (!sepMatch || sepMatch.index == null) {
+    return line;
+  }
+
+  const before = trimmed.slice(0, sepMatch.index).trim();
+  let after = trimmed.slice(sepMatch.index + sepMatch[0].length).trim();
+  if (!before || !after) {
+    return line;
+  }
+
+  const headerCells = parseTableCells(before.startsWith("|") ? before : `| ${before}`);
+  const colCount = headerCells.length;
+  if (colCount < 2) {
+    return line;
+  }
+
+  const separator = formatTableRow(Array(colCount).fill("---"));
+  const rows = [formatTableRow(headerCells), separator];
+
+  // Prefer explicit || row joins from the model
+  let rowStrings = [];
+  if (/\|\|/.test(after)) {
+    rowStrings = after.split(/\|\|/).map((part) => {
+      let row = part.trim();
+      if (!row) {
+        return "";
+      }
+      if (!row.startsWith("|")) {
+        row = `| ${row}`;
+      }
+      if (!row.endsWith("|")) {
+        row = `${row} |`;
+      }
+      return row;
+    }).filter(Boolean);
+  } else {
+    // Jammed rows without || — chunk cells, skipping empty boundary fillers
+    const bodyCells = parseTableCells(after.startsWith("|") ? after : `| ${after}`);
+    const cleaned = [];
+    for (let i = 0; i < bodyCells.length; i += 1) {
+      const atRowStart = cleaned.length % colCount === 0;
+      if (atRowStart && !bodyCells[i] && i + 1 < bodyCells.length && bodyCells[i + 1]) {
+        continue;
+      }
+      cleaned.push(bodyCells[i]);
+    }
+    for (let i = 0; i < cleaned.length; i += colCount) {
+      const chunk = cleaned.slice(i, i + colCount);
+      if (chunk.every((cell) => !cell)) {
+        continue;
+      }
+      while (chunk.length < colCount) {
+        chunk.push("");
+      }
+      rowStrings.push(formatTableRow(chunk));
+    }
+  }
+
+  for (const row of rowStrings) {
+    const cells = parseTableCells(row);
+    if (cells.every((cell) => !cell)) {
+      continue;
+    }
+    while (cells.length < colCount) {
+      cells.push("");
+    }
+    rows.push(formatTableRow(cells.slice(0, colCount)));
+  }
+
+  return rows.length >= 3 ? rows.join("\n") : line;
 }
 
 function formatMarkdownTable(lines, sources) {
@@ -296,7 +384,6 @@ function isTableBlock(lines) {
   if (!lines.every((line) => isTableLine(line))) {
     return false;
   }
-  // Prefer a real GFM header + separator, but also accept 2+ pipe rows
   return lines.some(isTableSeparator) || lines.filter(isTableRow).length >= 2;
 }
 
@@ -305,6 +392,11 @@ function preprocessAnswerText(text) {
   value = value.replace(/\s+(?=####\s+\d+[.)])/g, "\n");
   value = value.replace(/^####\s+(\d+[.)]\s*)/gm, "- ");
   value = value.replace(/^####\s+/gm, "- ");
+  // Expand jammed single-line pipe tables before block parsing
+  value = value
+    .split("\n")
+    .map((line) => expandCollapsedTableLine(line))
+    .join("\n");
   return value;
 }
 
@@ -322,7 +414,6 @@ function formatAssistantContent(text, sources) {
     if (lines.length === 0) {
       continue;
     }
-    // Merge consecutive pipe-table fragments split by blank lines
     if (
       blocks.length > 0 &&
       isTableBlock(blocks[blocks.length - 1]) &&
