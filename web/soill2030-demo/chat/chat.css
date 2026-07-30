@@ -504,6 +504,11 @@ body.chat-page {
   text-align: center;
 }
 
+.chat-footer__disclaimer a {
+  color: var(--soill-accent);
+  text-decoration: underline;
+}
+
 .chat-footer__status {
   margin: 0.35rem 0 0;
   font-size: 0.76rem;

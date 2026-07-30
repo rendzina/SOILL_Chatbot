@@ -312,6 +312,23 @@ def insert_conversation(doc: Dict[str, Any]) -> int:
     return int(row["id"]) if row else 0
 
 
+def delete_conversations_older_than(days: int) -> int:
+    """Delete conversation rows older than ``days``. Returns rows deleted."""
+    if days <= 0:
+        return 0
+    table = sql.Identifier(cfg.SOILL_CONVERSATIONS_TABLE)
+    query = sql.SQL(
+        """
+        DELETE FROM {table}
+        WHERE created_at < NOW() - (%(days)s * INTERVAL '1 day')
+        """
+    ).format(table=table)
+    conn = get_connection()
+    cur = conn.execute(query, {"days": days})
+    deleted = cur.rowcount if cur.rowcount is not None else 0
+    conn.commit()
+    return int(deleted)
+
 def fetch_conversations(
     date_from: Optional[Any] = None,
     date_to: Optional[Any] = None,

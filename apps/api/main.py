@@ -9,7 +9,9 @@ Run from repo root:
 
 from __future__ import annotations
 
+import logging
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -18,6 +20,8 @@ from fastapi.staticfiles import StaticFiles
 from starlette.responses import Response
 
 from routes.chat import router as chat_router
+
+logger = logging.getLogger(__name__)
 
 
 class ShortCacheStaticFiles(StaticFiles):
@@ -49,10 +53,25 @@ _extra_origins = [
     if origin.strip()
 ]
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Run retention purge once on startup (Render has no built-in cron)."""
+    try:
+        from soill.conversation_log import purge_expired_conversations
+
+        deleted = purge_expired_conversations()
+        logger.info("Startup conversation retention purge removed %s row(s)", deleted)
+    except Exception as exc:
+        logger.warning("Startup conversation retention purge skipped: %s", exc)
+    yield
+
+
 app = FastAPI(
     title="SOILL Chatbot API",
     description="HTTP API for the SOILL public RAG assistant.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

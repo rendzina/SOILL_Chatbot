@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOILL Assistant — privacy notice</title>
+  <link rel="stylesheet" href="chat.css?v=20260730-privacy">
+  <style>
+    body.privacy-page {
+      margin: 0;
+      background: var(--soill-bg);
+      color: var(--soill-text);
+    }
+
+    .privacy-shell {
+      max-width: 720px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #fff;
+      box-shadow: 0 0 0 1px var(--soill-border);
+      padding: 1.5rem 1.5rem 2.5rem;
+    }
+
+    .privacy-shell header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--soill-border);
+    }
+
+    .privacy-shell header img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .privacy-shell h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      color: var(--soill-green);
+    }
+
+    .privacy-shell .updated {
+      margin: 0.25rem 0 0;
+      font-size: 0.85rem;
+      color: var(--soill-muted);
+    }
+
+    .privacy-shell h2 {
+      margin: 1.5rem 0 0.5rem;
+      font-size: 1.05rem;
+      color: var(--soill-green-dark);
+    }
+
+    .privacy-shell p,
+    .privacy-shell li {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--soill-text);
+    }
+
+    .privacy-shell ul {
+      margin: 0.4rem 0 0;
+      padding-left: 1.2rem;
+    }
+
+    .privacy-shell a {
+      color: var(--soill-accent);
+    }
+
+    .privacy-back {
+      display: inline-block;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body class="privacy-page">
+  <article class="privacy-shell">
+    <header>
+      <img src="assets/soill-logo.jpg" alt="SOILL logo">
+      <div>
+        <h1>SOILL Assistant — privacy notice</h1>
+        <p class="updated">Last updated: 30 July 2026</p>
+      </div>
+    </header>
+
+    <h2>Who we are</h2>
+    <p>
+      This chat assistant is provided as part of the SOILL project (EU Mission Soil).
+      For privacy questions or to request deletion of your chat history, contact the
+      SOILL project team via the project website or your usual Cranfield University /
+      SOILL project contact.
+    </p>
+
+    <h2>What we collect</h2>
+    <p>When you use the assistant we store:</p>
+    <ul>
+      <li>the text of your questions and the assistant’s replies</li>
+      <li>a randomly generated session ID (kept in your browser for this tab only, and cleared when you start a “New chat”)</li>
+      <li>a technical visitor fingerprint derived from connection details (used only to understand usage patterns and help prevent abuse)</li>
+      <li>the date and time of each message</li>
+    </ul>
+    <p>
+      We do not create user accounts. We do not store your name, email address, or
+      other contact details unless you type them into the chat yourself. On the
+      production service we do not store your raw IP address or browser user-agent
+      string in the conversation database.
+    </p>
+
+    <h2>Why we process this data</h2>
+    <p>
+      We process chat content to answer your questions, keep short conversation
+      context, and monitor and improve the service. The legal basis is our
+      legitimate interest in operating and improving a research and project support
+      tool. Please do not enter personal data about yourself or others into the chat.
+    </p>
+
+    <h2>Who processes your messages</h2>
+    <p>
+      Your questions (and recent conversation turns needed for context) are sent to
+      Mistral AI to generate embeddings and answers. Mistral acts as a processor for
+      this purpose. The application and database are hosted on Render.
+    </p>
+
+    <h2>How long we keep data</h2>
+    <p>
+      Chat records are retained for 12 months, after which they are deleted
+      automatically. Session IDs in your browser expire when you close the tab or
+      start a new chat.
+    </p>
+
+    <h2>Your rights</h2>
+    <p>
+      Depending on applicable law (including UK GDPR / EU GDPR), you may have rights
+      to access, rectify, erase, restrict, or object to processing of your personal
+      data, and to lodge a complaint with a supervisory authority (in the UK: the
+      Information Commissioner’s Office). To exercise these rights in relation to
+      chat logs, contact us using the details above and include approximate dates of
+      use if possible.
+    </p>
+
+    <h2>Changes</h2>
+    <p>
+      We may update this notice from time to time. The “Last updated” date above will
+      change when we do.
+    </p>
+
+    <a class="privacy-back" href="index.html">← Back to SOILL Assistant</a>
+  </article>
+</body>
+</html>

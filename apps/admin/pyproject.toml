@@ -14,6 +14,7 @@ soill-report = "reporter:main"
 soill-db-init = "db_init:main"
 soill-ocr-preprocess = "ocr_preprocess:main"
 soill-source-catalog = "sync_source_catalog:main"
+soill-purge-conversations = "purge_conversations:main"
 
 [tool.uv.sources]
 soill = { workspace = true }

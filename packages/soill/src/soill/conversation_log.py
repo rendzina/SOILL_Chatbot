@@ -89,3 +89,36 @@ def log_interaction(
             exc,
             exc_info=True,
         )
+
+
+def purge_expired_conversations(retention_days: Optional[int] = None) -> int:
+    """
+    Delete conversation rows older than the retention window.
+
+    Returns the number of rows deleted. Never raises: failures are logged only.
+    """
+    days = (
+        cfg.CONVERSATION_RETENTION_DAYS
+        if retention_days is None
+        else max(0, int(retention_days))
+    )
+    if days <= 0:
+        logger.info("Conversation retention purge disabled (days=%s)", days)
+        return 0
+    try:
+        deleted = store_pg.delete_conversations_older_than(days)
+        logger.info(
+            "Purged %s conversation(s) older than %s day(s) from %s",
+            deleted,
+            days,
+            cfg.SOILL_CONVERSATIONS_TABLE,
+        )
+        return deleted
+    except Exception as exc:
+        logger.error(
+            "Failed to purge expired conversations from %s: %s",
+            cfg.SOILL_CONVERSATIONS_TABLE,
+            exc,
+            exc_info=True,
+        )
+        return 0

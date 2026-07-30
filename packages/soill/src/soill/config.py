@@ -65,6 +65,10 @@ def _env_bool(key: str, default: bool) -> bool:
 
 LOG_CONVERSATIONS: bool = _env_bool("LOG_CONVERSATIONS", True)
 LOG_CLIENT_METADATA: bool = _env_bool("LOG_CLIENT_METADATA", True)
+# Delete conversation rows older than this many days (0 disables automatic purge).
+CONVERSATION_RETENTION_DAYS: int = max(
+    0, int(os.environ.get("CONVERSATION_RETENTION_DAYS", "365"))
+)
 
 CHAT_HISTORY_ENABLED: bool = _env_bool("CHAT_HISTORY_ENABLED", True)
 CHAT_HISTORY_TURNS: int = max(0, int(os.environ.get("CHAT_HISTORY_TURNS", "3")))

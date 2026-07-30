@@ -186,13 +186,13 @@ See [`.env.example`](.env.example). Key settings:
 - `MISTRAL_API_KEY`, `MISTRAL_EMBED_MODEL`, `MISTRAL_CHAT_MODEL`
 - `RAG_TOP_K`, `RAG_MMR_*` — retrieval and MMR re-ranking
 - `CHAT_HISTORY_*` — multi-turn chat and follow-up retrieval expansion
-- `LOG_CONVERSATIONS`, `LOG_CLIENT_METADATA`
+- `LOG_CONVERSATIONS`, `LOG_CLIENT_METADATA`, `CONVERSATION_RETENTION_DAYS`
 - `SOURCE_DOCUMENTS` — optional path override for ingest
 - `PDF_PREPROCESSING_ROOT`, `OCR_LANGUAGE`, `OCR_FORCE` — OCR batch pipeline (see [OCR workflow](documents/OCR_PDF_PreProcessingWorkflow.md))
 
 ## Privacy and logging
 
-When `LOG_CONVERSATIONS=true`, each question and answer is stored in `soill_conversations` with `thread_id` and a hashed `visitor_fingerprint`. Raw IP and User-Agent are optional (`LOG_CLIENT_METADATA`). Restrict database access and disclose retention in your privacy notice.
+When `LOG_CONVERSATIONS=true`, each question and answer is stored in `soill_conversations` with `thread_id` and a hashed `visitor_fingerprint`. Raw IP and User-Agent are optional (`LOG_CLIENT_METADATA`). Rows older than `CONVERSATION_RETENTION_DAYS` (default 365) are deleted on API startup and via `uv run soill-purge-conversations`. See [`web/privacy.html`](web/privacy.html). Restrict database access and disclose retention in your privacy notice.
 
 ## Architecture
 
