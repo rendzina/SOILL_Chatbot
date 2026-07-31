@@ -1,17 +1,24 @@
 """
 Derive visitor metadata from Chainlit session / WSGI environ (for logging).
 
+IP addresses and user-agent strings are not stored. The visitor_fingerprint
+column is retained for schema compatibility and is always set to a constant
+anonymous placeholder.
+
 **Created:** 04-06-2026 (UK style).
+**Updated:** 31-07-2026 — stop storing IP-derived identifiers.
 """
 
 from __future__ import annotations
 
-import hashlib
 import logging
 from dataclasses import asdict, dataclass
 from typing import Any, Optional, Union
 
 logger = logging.getLogger(__name__)
+
+# Column is NOT NULL; use a constant so we never persist IP/UA-derived hashes.
+ANONYMOUS_FINGERPRINT = "anonymous"
 
 
 @dataclass(frozen=True)
@@ -31,36 +38,11 @@ class ClientMetadata:
         return ClientMetadata(
             thread_id="anonymous",
             session_id="anonymous",
-            visitor_fingerprint=_hash_parts("unknown", "unknown"),
+            visitor_fingerprint=ANONYMOUS_FINGERPRINT,
             client_ip="",
             user_agent="",
             client_type="unknown",
         )
-
-
-def _hash_parts(*parts: str) -> str:
-    payload = "|".join((part or "").strip() for part in parts)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _client_ip(environ: dict[str, Any]) -> str:
-    forwarded = environ.get("HTTP_X_FORWARDED_FOR") or environ.get("X-Forwarded-For")
-    if forwarded:
-        return str(forwarded).split(",")[0].strip()
-    for key in ("REMOTE_ADDR", "HTTP_X_REAL_IP", "CLIENT_IP"):
-        value = environ.get(key)
-        if value:
-            return str(value).strip()
-    return ""
-
-
-def _user_agent(environ: dict[str, Any]) -> str:
-    return str(environ.get("HTTP_USER_AGENT") or "")[:512]
-
-
-def _forwarded_for(environ: dict[str, Any]) -> str:
-    raw = environ.get("HTTP_X_FORWARDED_FOR") or environ.get("X-Forwarded-For")
-    return str(raw).strip() if raw else ""
 
 
 def metadata_from_environ(
@@ -70,18 +52,16 @@ def metadata_from_environ(
     environ: Optional[dict[str, Any]],
     client_type: str = "webapp",
 ) -> ClientMetadata:
-    env = environ or {}
-    ip = _client_ip(env)
-    ua = _user_agent(env)
-    xff = _forwarded_for(env)
+    """Build client metadata without capturing IP or user-agent."""
+    _ = environ  # retained for call-site compatibility; not used for identity
     return ClientMetadata(
         thread_id=thread_id or session_id or "anonymous",
         session_id=session_id or thread_id or "anonymous",
-        visitor_fingerprint=_hash_parts(ip, ua),
-        client_ip=ip,
-        user_agent=ua,
+        visitor_fingerprint=ANONYMOUS_FINGERPRINT,
+        client_ip="",
+        user_agent="",
         client_type=client_type or "webapp",
-        forwarded_for=xff,
+        forwarded_for="",
     )
 
 
@@ -121,7 +101,15 @@ def coerce_client_metadata(
     if value is None:
         return ClientMetadata.anonymous()
     if isinstance(value, ClientMetadata):
-        return value
+        return ClientMetadata(
+            thread_id=value.thread_id,
+            session_id=value.session_id,
+            visitor_fingerprint=ANONYMOUS_FINGERPRINT,
+            client_ip="",
+            user_agent="",
+            client_type=value.client_type,
+            forwarded_for="",
+        )
     if isinstance(value, dict):
         return ClientMetadata(
             thread_id=str(
@@ -130,12 +118,10 @@ def coerce_client_metadata(
             session_id=str(
                 value.get("session_id") or value.get("thread_id") or "anonymous"
             ),
-            visitor_fingerprint=str(
-                value.get("visitor_fingerprint") or _hash_parts("unknown", "unknown")
-            ),
-            client_ip=str(value.get("client_ip") or ""),
-            user_agent=str(value.get("user_agent") or ""),
+            visitor_fingerprint=ANONYMOUS_FINGERPRINT,
+            client_ip="",
+            user_agent="",
             client_type=str(value.get("client_type") or "webapp"),
-            forwarded_for=str(value.get("forwarded_for") or ""),
+            forwarded_for="",
         )
     return ClientMetadata.anonymous()

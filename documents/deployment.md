@@ -287,7 +287,7 @@ For the polished SOILL2030 mock (local or as a static Render site), see [`web/so
 
 ### Privacy and logging
 
-Conversations from the API are logged to `soill_conversations` with `client_type="api"`. Ensure your project privacy notice covers stored questions, answers, and optional client metadata (`LOG_CLIENT_METADATA`).
+Conversations from the API are logged to `soill_conversations` with `client_type="api"`. IP addresses and user-agent strings are not stored. See `web/privacy.html`.
 
 ---
 

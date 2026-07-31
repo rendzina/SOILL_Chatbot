@@ -171,7 +171,7 @@ Typical setup uses **one Postgres database** and **two web services**:
 3. Deploy the API as a second web service (Docker: context = repo root, Dockerfile = `apps/api/Dockerfile`, health check `/health`), or use [`render-demo.yaml`](render-demo.yaml) for API + SOILL2030 static demo together.
 4. Link `DATABASE_URL` from the same Postgres instance on both services; set `MISTRAL_API_KEY` in the dashboard.
 5. Run `uv run soill-process` **locally** against the external database URL before go-live so the index is not empty.
-6. Optional: set `LOG_CLIENT_METADATA=false` on Render unless your privacy notice covers IP/User-Agent storage.
+6. IP / user-agent logging is disabled in code; keep `LOG_CLIENT_METADATA=false` on Render.
 7. For a separate project-website origin calling the API directly (not via iframe), add that origin to CORS in [`apps/api/main.py`](apps/api/main.py).
 
 Internal `DATABASE_URL` is for the web services; external URL is for local admin tools.
@@ -192,7 +192,7 @@ See [`.env.example`](.env.example). Key settings:
 
 ## Privacy and logging
 
-When `LOG_CONVERSATIONS=true`, each question and answer is stored in `soill_conversations` with `thread_id` and a hashed `visitor_fingerprint`. Raw IP and User-Agent are optional (`LOG_CLIENT_METADATA`). Rows older than `CONVERSATION_RETENTION_DAYS` (default 365) are deleted on API startup and via `uv run soill-purge-conversations`. See [`web/privacy.html`](web/privacy.html). Restrict database access and disclose retention in your privacy notice.
+When `LOG_CONVERSATIONS=true`, each question and answer is stored in `soill_conversations` with a random `thread_id` / `session_id`. IP addresses, user-agent strings, and visitor fingerprints derived from connection details are **not** stored. Rows older than `CONVERSATION_RETENTION_DAYS` (default 365) are deleted on API startup and via `uv run soill-purge-conversations`. See [`web/privacy.html`](web/privacy.html).
 
 ## Architecture
 

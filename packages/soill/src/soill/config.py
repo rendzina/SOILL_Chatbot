@@ -64,7 +64,8 @@ def _env_bool(key: str, default: bool) -> bool:
 
 
 LOG_CONVERSATIONS: bool = _env_bool("LOG_CONVERSATIONS", True)
-LOG_CLIENT_METADATA: bool = _env_bool("LOG_CLIENT_METADATA", True)
+# Deprecated: IP / user-agent are never stored. Kept for env compatibility only.
+LOG_CLIENT_METADATA: bool = _env_bool("LOG_CLIENT_METADATA", False)
 # Delete conversation rows older than this many days (0 disables automatic purge).
 CONVERSATION_RETENTION_DAYS: int = max(
     0, int(os.environ.get("CONVERSATION_RETENTION_DAYS", "365"))

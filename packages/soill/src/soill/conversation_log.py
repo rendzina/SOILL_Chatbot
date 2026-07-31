@@ -69,10 +69,6 @@ def log_interaction(
         "user_agent": None,
         "forwarded_for": None,
     }
-    if cfg.LOG_CLIENT_METADATA:
-        doc["client_ip"] = meta.client_ip or None
-        doc["user_agent"] = meta.user_agent or None
-        doc["forwarded_for"] = meta.forwarded_for or None
 
     try:
         row_id = store_pg.insert_conversation(doc)
