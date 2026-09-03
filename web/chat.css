@@ -3,13 +3,14 @@
  *
  * **Created:** 07-06-2026 (UK style).
  * **Updated:** 10-06-2026 — SOILL branding and NetZero-inspired layout.
+ * **Updated:** 03-09-2026 — header forest green from SOILL-Stepup logo (#1B7F5E).
  */
 
 :root {
   color-scheme: light;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   line-height: 1.5;
-  --soill-green: #1e3a2f;
+  --soill-green: #1b7f5e;
   --soill-green-dark: #163026;
   --soill-accent: #2d6a4f;
   --soill-mint: #d8f3dc;
@@ -17,7 +18,7 @@
   --soill-border: #d6e2db;
   --soill-text: #1b1b1b;
   --soill-muted: #5f6f66;
-  --soill-user: #1e3a2f;
+  --soill-user: #1b7f5e;
   --soill-error-bg: #fef2f2;
   --soill-error-border: #fecaca;
 }
@@ -78,7 +79,7 @@ body.chat-page {
 .chat-header__tagline {
   margin: 0.15rem 0 0;
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .chat-header__action {
